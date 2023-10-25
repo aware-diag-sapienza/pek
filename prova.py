@@ -1,6 +1,6 @@
-from pek import Dataset
-from pek import IPEK, IPEKPP
 import numpy as np
+
+from pek import IPEK, IPEKPP, Dataset, metrics
 
 seed = 0
 data = Dataset.load("Wine")

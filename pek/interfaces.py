@@ -29,3 +29,6 @@ class ProgressiveClusteringEnsemble(ABC):
     @abstractmethod
     def executeNextIteration(self) -> EnsemblePartialResult:
         pass
+
+
+__all = [ProgressiveClusteringRun, ProgressiveClusteringEnsemble]

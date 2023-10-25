@@ -2,7 +2,8 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
+
+# from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
 from sklearn.cluster._k_means_lloyd import (
     lloyd_iter_chunked_dense,
     lloyd_iter_chunked_sparse,
@@ -22,6 +23,7 @@ from sklearn.utils.fixes import threadpool_limits
 from sklearn.utils.validation import _check_sample_weight
 
 from .interfaces import ProgressiveClusteringRun
+from .metrics import inertia as inertia_fn
 from .results import RunPartialResult, RunPartialResultInfo, RunPartialResultMetrics
 from .utils import best_labels_dtype
 
@@ -103,10 +105,10 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
 
         if sp.issparse(X):
             self._iter_fn = lloyd_iter_chunked_sparse
-            self._inertia_fn = _inertia_sparse
+            # self._inertia_fn = _inertia_sparse
         else:
             self._iter_fn = lloyd_iter_chunked_dense
-            self._inertia_fn = _inertia_dense
+            # self._inertia_fn = _inertia_dense
 
         self.n_clusters = n_clusters
         self.max_iter = max_iter
@@ -145,7 +147,7 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
 
         if self._iteration is None:
             with threadpool_limits(limits=1, user_api="blas"):
-                lloyd_iter_chunked_dense(
+                self._iter_fn(
                     self.X,
                     self._sample_weight,
                     self._centers,
@@ -157,13 +159,14 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
                     update_centers=False,
                 )
                 self._iteration = 0
-                inertia = _inertia_dense(self.X, self._sample_weight, self._centers, self._labels, self._n_threads)
+                # inertia = self._inertia_fn(self.X, self._sample_weight, self._centers, self._labels, self._n_threads)
+                inertia = inertia_fn(self.X, self._labels)
                 self._completed = False
                 return _composePartialResult(self._iteration, self._completed, inertia, self._centers, self._labels)
 
         if self._iteration == self.max_iter or self._converged:
             with threadpool_limits(limits=1, user_api="blas"):
-                lloyd_iter_chunked_dense(
+                self._iter_fn(
                     self.X,
                     self._sample_weight,
                     self._centers,
@@ -175,14 +178,15 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
                     update_centers=False,
                 )
                 self._iteration += 1
-                inertia = _inertia_dense(self.X, self._sample_weight, self._centers, self._labels, self._n_threads)
+                # inertia = self._inertia_fn(self.X, self._sample_weight, self._centers, self._labels, self._n_threads)
+                inertia = inertia_fn(self.X, self._labels)
                 self._completed = True
                 return _composePartialResult(self._iteration, self._completed, inertia, self._centers, self._labels)
 
         # Threadpoolctl context to limit the number of threads in second level of
         # nested parallelism (i.e. BLAS) to avoid oversubscription.
         with threadpool_limits(limits=1, user_api="blas"):
-            lloyd_iter_chunked_dense(
+            self._iter_fn(
                 self.X,
                 self._sample_weight,
                 self._centers,
@@ -194,7 +198,8 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
                 update_centers=True,
             )
             self._iteration += 1
-            inertia = _inertia_dense(self.X, self._sample_weight, self._centers, self._labels, self._n_threads)
+            # inertia = self._inertia_fn(self.X, self._sample_weight, self._centers, self._labels, self._n_threads)
+            inertia = inertia_fn(self.X, self._labels)
             self._centers, self._centers_new = self._centers_new, self._centers
 
             if np.array_equal(self._labels, self._labels_old):
