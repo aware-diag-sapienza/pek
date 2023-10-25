@@ -5,7 +5,7 @@ from pek.version import __version__
 
 if __name__ == "__main__":
     setup(
-        name="pec",
+        name="pek",
         version=__version__,
         description="PEK - Progressive Ensemble K-Means Clustering",
         url="https://aware-diag-sapienza.github.io/pek",
