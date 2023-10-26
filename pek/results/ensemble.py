@@ -1,28 +1,6 @@
 from sklearn.utils import Bunch
 
 
-class RunPartialResult(Bunch):
-    def __init__(self, info, metrics, labels):
-        if not isinstance(info, RunPartialResultInfo):
-            raise TypeError("info is not instance of RunPartialResultInfo.")
-        if not isinstance(metrics, RunPartialResultMetrics):
-            raise TypeError("metrics is not instance of RunPartialResultMetrics.")
-        super().__init__(info=info, metrics=metrics, labels=labels)
-
-
-class RunPartialResultInfo(Bunch):
-    def __init__(self, iteration, isLast):
-        super().__init__(
-            iteration=iteration,
-            isLast=isLast,
-        )
-
-
-class RunPartialResultMetrics(Bunch):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
 class EnsemblePartialResult(Bunch):
     def __init__(self, info, metrics, labels, partitions, runsPartialResultInfo, runsPartialResultMetrics):
         if not isinstance(info, EnsemblePartialResultInfo):
@@ -41,7 +19,7 @@ class EnsemblePartialResult(Bunch):
 
 class EnsemblePartialResultInfo(Bunch):
     def __init__(self, iteration, isLast, cost, runCompleted, **kwargs):
-        super().__init__(iteration=iteration, isLast=isLast, cost=cost, runStatus=runCompleted, **kwargs)
+        super().__init__(iteration=iteration, isLast=isLast, cost=cost, runCompleted=runCompleted, **kwargs)
 
 
 class EnsemblePartialResultMetrics(Bunch):
@@ -50,9 +28,6 @@ class EnsemblePartialResultMetrics(Bunch):
 
 
 __all__ = [
-    "RunPartialResult",
-    "RunPartialResultInfo",
-    "RunPartialResultMetrics",
     "EnsemblePartialResult",
     "EnsemblePartialResultInfo",
     "EnsemblePartialResultMetrics",

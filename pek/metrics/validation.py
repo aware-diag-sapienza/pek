@@ -5,28 +5,19 @@ from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.validation import _check_sample_weight
 
-
-def _getClusters(data, labels):
-    """
-    Returns a tuple (clusters, centers). If we have k clusters:
-    - clusters: an array [c1, ..., ck] where ci is the cluster i as ndarray (subset of data).
-    - centers: an array [c1, ..., ck] where ci is the center of the cluster i
-    """
-    unique_labels = np.unique(labels)
-    clusters_idx = [np.where(labels == l) for l in unique_labels]
-    clusters = [data[i] for i in clusters_idx]
-    centers = np.array([np.mean(c, axis=0) for c in clusters], dtype=float)
-    return clusters, centers
+from .utils import _getClusters
 
 
 def calinskiHarabasz(data, labels) -> float:
     """Calinski and Harabasz Score. Better max."""
-    return skmetrics.calinski_harabasz_score(data, labels)
+    result = skmetrics.calinski_harabasz_score(data, labels)
+    return float(result)  # convert np.float64 to float
 
 
 def daviesBouldinIndex(data, labels) -> float:
     """Davies Bouldin Index. Better min."""
-    return skmetrics.davies_bouldin_score(data, labels)
+    result = skmetrics.davies_bouldin_score(data, labels)
+    return float(result)  # convert np.float64 to float
 
 
 def dunnIndex(data, labels) -> float:
@@ -44,7 +35,7 @@ def dunnIndex(data, labels) -> float:
     idx = np.triu_indices(centers_pairwise_distances.shape[0], 1)
     min_centers_distance = np.min(centers_pairwise_distances[idx])
     result = min_centers_distance / max_cluster_diameter
-    return result
+    return float(result)  # convert np.float64 to float
 
 
 def inertia(data, labels) -> float:
@@ -57,23 +48,24 @@ def inertia(data, labels) -> float:
     clusters, centers = _getClusters(data, labels)
     sample_weight = _check_sample_weight(None, data, dtype=data.dtype)
     n_threads = _openmp_effective_n_threads()
-    return _inertia_fn(data, sample_weight, centers, labels.astype(np.int32), n_threads)
+    result = _inertia_fn(data, sample_weight, centers, labels.astype(np.int32), n_threads)
+    return float(result)  # convert np.float64 to float
 
 
 def silhouette(data, labels) -> float:
     """Silhouette score. Better max."""
-
-    return skmetrics.silhouette_score(data, labels)
+    result = skmetrics.silhouette_score(data, labels)
+    return float(result)  # convert np.float64 to float
 
 
 def simplifiedSilhouette(data, labels) -> float:
     """Simplified Silhouette Coefficient of all samples. Better max."""
     n = data.shape[0]
     clusters, centers = _getClusters(data, labels)
-    distances = skmetrics.pairwise.euclidean_distances(clusters, centers)  # distance of each point to all centroids
+    distances = skmetrics.pairwise.euclidean_distances(data, centers)  # distance of each point to all centroids
 
     A = distances[np.arange(n), labels]  # distance of each point to its cluster centroid
-    distances[np.arange(n), labels] = np.Inf  # set to infinte the distance to own centroid
+    distances[np.arange(n), labels] = np.Inf  # set to infinite the distance to own centroid
 
     B = np.min(
         distances, axis=1
@@ -83,18 +75,19 @@ def simplifiedSilhouette(data, labels) -> float:
     return float(S)
 
 
-ALL_FN = {
-    "calinski_harabasz": calinskiHarabasz,
-    "davies_bouldin": daviesBouldinIndex,
-    "dunn_index": dunnIndex,
-    "inertia": inertia,
-    "silhouette": silhouette,
-    "simplified_silhouette": simplifiedSilhouette,
-}
+def all():
+    return {
+        "calinski_harabasz": calinskiHarabasz,
+        "davies_bouldin": daviesBouldinIndex,
+        "dunn_index": dunnIndex,
+        "inertia": inertia,
+        "silhouette": silhouette,
+        "simplified_silhouette": simplifiedSilhouette,
+    }
 
 
 __all__ = [
-    "ALL_FN",
+    "all",
     "calinskiHarabasz",
     "daviesBouldinIndex",
     "dunnIndex",

@@ -7,12 +7,12 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 
-from .interfaces import ProgressiveClusteringEnsemble
-from .results import (
+from ..results.ensemble import (
     EnsemblePartialResult,
     EnsemblePartialResultInfo,
     EnsemblePartialResultMetrics,
 )
+from .interfaces import ProgressiveClusteringEnsemble
 from .run import ProgressiveKMeansRun
 from .utils import best_labels_dtype
 
@@ -88,13 +88,19 @@ class _InertiaBasedProgressiveEnsembleKMeans(ProgressiveClusteringEnsemble):
             self._iteration += 1
 
         self._completed = np.all(self._runsCompleted)
-        bestRunIndex = np.argmin(self._runsInertia)
+        bestRunIndex = int(np.argmin(self._runsInertia))
+        worstRunIndex = int(np.argmax(self._runsInertia))
         bestLabels = self._partitions[:, bestRunIndex]
-        bestInertia = self._runsInertia[bestRunIndex]
+        bestInertia = float(self._runsInertia[bestRunIndex])
 
         runCompleted_str = "-".join(map(str, np.array(self._runsCompleted).astype(int)))
         ensemblePartialResultInfo = EnsemblePartialResultInfo(
-            self._iteration, self._completed, iterationCost, runCompleted_str, bestRun=bestRunIndex
+            self._iteration,
+            self._completed,
+            iterationCost,
+            runCompleted_str,
+            bestRun=bestRunIndex,
+            worstRun=worstRunIndex,
         )
         ensemblePartialResultMetrics = EnsemblePartialResultMetrics(inertia=bestInertia)
         ensemblePartialResult = EnsemblePartialResult(

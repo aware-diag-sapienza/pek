@@ -22,9 +22,13 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import threadpool_limits
 from sklearn.utils.validation import _check_sample_weight
 
+from ..metrics.validation import inertia as inertia_fn
+from ..results.run import (
+    RunPartialResult,
+    RunPartialResultInfo,
+    RunPartialResultMetrics,
+)
 from .interfaces import ProgressiveClusteringRun
-from .metrics import inertia as inertia_fn
-from .results import RunPartialResult, RunPartialResultInfo, RunPartialResultMetrics
 from .utils import best_labels_dtype
 
 

@@ -13,7 +13,7 @@ if __name__ == "__main__":
         author_email="graziano.blasilli@uniroma1.it",
         license="GNU General Public License (GPL)",
         platforms=["Linux", "Mac OS-X", "Solaris", "Unix", "Windows"],
-        packages=["pek", "pek.csv"],
+        packages=["pek", "pek.clustering", "pek.csv", "pek.metrics", "pek.results"],
         # python_requires='>=3.9.0',
         install_requires=open(Path("requirements.txt")).read().strip().split("\n"),
         package_data={"pek.csv": ["*.csv"]},

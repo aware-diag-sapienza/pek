@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-from .results import EnsemblePartialResult, RunPartialResult
+from ..results.ensemble import EnsemblePartialResult
+from ..results.run import RunPartialResult
 
 
 class ProgressiveClusteringRun(ABC):
