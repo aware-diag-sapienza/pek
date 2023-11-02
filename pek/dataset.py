@@ -3,6 +3,7 @@ from abc import ABC
 from io import StringIO as StringIO
 
 import numpy as np
+from sklearn.utils import Bunch
 
 # the file names is: datasetName_numClusters.csv
 _fileNames = [
@@ -30,34 +31,37 @@ _fileNames = [
 ]
 
 
-class Dataset(ABC):
+def _checkName(datasetName):
+    allNames = [d.name for d in Dataset.all()]
+    if datasetName not in allNames:
+        raise NameError(f"Dataset name '{datasetName}' is invalid.")
+
+
+def _loadData(datasetName) -> np.ndarray:
+    """Loads the dataset in form of numpy array."""
+    _checkName(datasetName)
+    for f in _fileNames:
+        if f.startswith(datasetName + "_"):
+            csvContent = str(pkgutil.get_data(__name__, f"csv/{f}").decode())
+            X = np.loadtxt(StringIO(csvContent), skiprows=1, delimiter=",").astype(float)
+            return X
+
+
+class Dataset:
     """Utility class for loading built-in datasets."""
 
-    @staticmethod
-    def _checkName(datasetName):
-        allNames = Dataset.allNames()
-        if datasetName not in allNames:
-            raise NameError(f"Dataset name '{datasetName}' is invalid.")
+    def __init__(self, name):
+        self.name = name
+        self.n_clusters = list(filter(lambda d: d.name == name, Dataset.all()))[0].n_clusters
+        self.data = _loadData(name)
 
     @staticmethod
-    def allNames() -> list:
-        """Returns the list of available datasets."""
-        return [n.split("_")[0] for n in _fileNames]
-
-    @staticmethod
-    def load(datasetName) -> np.ndarray:
-        """Loads the dataset in form of numpy array."""
-        Dataset._checkName(datasetName)
-        for f in _fileNames:
-            if f.startswith(datasetName + "_"):
-                csvContent = str(pkgutil.get_data(__name__, f"csv/{f}").decode())
-                X = np.loadtxt(StringIO(csvContent), skiprows=1, delimiter=",").astype(float)
-                return X
-
-    @staticmethod
-    def getNumClusters(datasetName):
-        """Returns the number of clusters of the dataset."""
-        Dataset._checkName(datasetName)
-        for f in _fileNames:
-            numClusters = int(f.split("_")[1].replace(".csv", ""))
-            return numClusters
+    def all() -> list:
+        """Returns the list of available datasets, reporting the name and the number of clusters.
+        [{'name': 'A1', 'n_clusters': 20}, ...]"""
+        result = []
+        for s in _fileNames:
+            name = s.split("_")[0]
+            n_clusters = int(s.split("_")[1].replace(".csv", ""))
+            result.append(Bunch(name=name, n_clusters=n_clusters))
+        return result
