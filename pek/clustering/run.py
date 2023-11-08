@@ -32,10 +32,10 @@ from .interfaces import ProgressiveClusteringRun
 from .utils import best_labels_dtype
 
 
-def _composePartialResult(iteration, completed, inertia, centers, labels):
+def _composePartialResult(iteration, completed, inertia, centroids, labels):
     info = RunPartialResultInfo(iteration, completed)
     metrics = RunPartialResultMetrics(inertia=inertia)
-    return RunPartialResult(info, metrics, labels.astype(best_labels_dtype(len(centers))))
+    return RunPartialResult(info, metrics, centroids, labels.astype(best_labels_dtype(len(centroids))))
 
 
 class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):

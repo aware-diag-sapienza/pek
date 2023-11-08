@@ -1,11 +1,16 @@
-from pek import IPEKPP, Dataset, metrics
+from pek import metrics
+from pek.clustering import IPEKPP
+from pek.data import BuiltInDatasetLoader
 
-dataset = Dataset.get("Wine")
-km = IPEKPP(dataset.data, n_clusters=4, random_state=0)
+dataset = BuiltInDatasetLoader.load("Wine")
+print(dataset)
+
+
+km = IPEKPP(dataset.data_scaled, n_clusters=4, random_state=0)
 while km.hasNextIteration():
     r = km.executeNextIteration()
 
     for metricName, metricFn in metrics.validation.all().items():
-        r.metrics[metricName] = metricFn(dataset.data, r.labels)
+        r.metrics[metricName] = metricFn(dataset.data_scaled, r.labels)
 
     print(r.info, r.metrics)

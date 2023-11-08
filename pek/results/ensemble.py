@@ -2,7 +2,7 @@ from sklearn.utils import Bunch
 
 
 class EnsemblePartialResult(Bunch):
-    def __init__(self, info, metrics, labels, partitions, runsPartialResultInfo, runsPartialResultMetrics):
+    def __init__(self, info, metrics, centroids, labels, partitions, runsPartialResultInfo, runsPartialResultMetrics):
         if not isinstance(info, EnsemblePartialResultInfo):
             raise TypeError("info is not instance of EnsemblePartialResultInfo.")
         if not isinstance(metrics, EnsemblePartialResultMetrics):
@@ -10,6 +10,7 @@ class EnsemblePartialResult(Bunch):
         super().__init__(
             info=info,
             metrics=metrics,
+            centroids=centroids,
             labels=labels,
             partitions=partitions,
             runsPartialResultInfo=runsPartialResultInfo,

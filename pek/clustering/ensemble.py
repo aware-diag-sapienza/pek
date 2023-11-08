@@ -56,6 +56,7 @@ class _InertiaBasedProgressiveEnsembleKMeans(ProgressiveClusteringEnsemble):
             self._runs.append(r)
 
         self._partitions = np.zeros((self._X.shape[0], self._n_runs), dtype=best_labels_dtype(self._n_clusters))
+        self._centroids = np.zeros((self._n_clusters, self._X.shape[1], self._n_runs), dtype=float)
         self._runsLastPartialResultInfo = [None for _ in range(self._n_runs)]
         self._runsLastPartialResultMetrics = [None for _ in range(self._n_runs)]
         self._runsCompleted = [False for _ in range(self._n_runs)]
@@ -77,6 +78,7 @@ class _InertiaBasedProgressiveEnsembleKMeans(ProgressiveClusteringEnsemble):
                 iterationCost += 1
                 rp = self._runs[j].executeNextIteration()
                 self._partitions[:, j] = rp.labels
+                self._centroids[:, :, j] = rp.centroids
                 self._runsLastPartialResultInfo[j] = rp.info
                 self._runsLastPartialResultMetrics[j] = rp.metrics
                 self._runsCompleted[j] = rp.info.isLast
@@ -90,6 +92,7 @@ class _InertiaBasedProgressiveEnsembleKMeans(ProgressiveClusteringEnsemble):
         self._completed = np.all(self._runsCompleted)
         bestRunIndex = int(np.argmin(self._runsInertia))
         worstRunIndex = int(np.argmax(self._runsInertia))
+        bestCentroids = self._centroids[:, :, bestRunIndex]
         bestLabels = self._partitions[:, bestRunIndex]
         bestInertia = float(self._runsInertia[bestRunIndex])
 
@@ -106,6 +109,7 @@ class _InertiaBasedProgressiveEnsembleKMeans(ProgressiveClusteringEnsemble):
         ensemblePartialResult = EnsemblePartialResult(
             ensemblePartialResultInfo,
             ensemblePartialResultMetrics,
+            bestCentroids,
             bestLabels,
             self._partitions,
             self._runsLastPartialResultInfo,

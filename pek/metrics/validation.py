@@ -5,6 +5,7 @@ from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.validation import _check_sample_weight
 
+from ..data.utils import intArray
 from .utils import _getClusters
 
 
@@ -44,6 +45,10 @@ def inertia(data, labels) -> float:
         _inertia_fn = _inertia_sparse
     else:
         _inertia_fn = _inertia_dense
+
+    # print(data.shape, data.dtype, data.flags)
+    # print(labels.shape, labels.dtype, labels.flags)
+    # print("\n\n\n")
 
     clusters, centers = _getClusters(data, labels)
     sample_weight = _check_sample_weight(None, data, dtype=data.dtype)
