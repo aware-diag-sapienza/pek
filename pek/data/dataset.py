@@ -3,7 +3,6 @@ from abc import ABC
 from io import BytesIO, StringIO
 
 import numpy as np
-import pandas as pd
 
 _names = [
     "A1",
@@ -60,13 +59,14 @@ def _checkName(name):
         raise ValueError(f"Dataset '{name}' does not exist.")
 
 
-def _loadDataframe(datasetName) -> pd.DataFrame:
+'''def _loadDataframe(datasetName) -> pd.DataFrame:
     """Loads the dataset in form of pandas dataframe. Read the csv file."""
     _checkName(datasetName)
     file = f"_csv/{datasetName}.csv"
     csvContent = str(pkgutil.get_data(__name__, file).decode())
     df = pd.DataFrame(StringIO(csvContent))
     return df
+'''
 
 
 def _loadPackageFile_npy(filePath) -> np.ndarray:
