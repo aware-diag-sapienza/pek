@@ -3,6 +3,7 @@ from abc import ABC
 from io import BytesIO, StringIO
 
 import numpy as np
+from sklearn.utils import Bunch
 
 _names = [
     "A1",
@@ -77,16 +78,82 @@ def _loadPackageFile_npy(filePath) -> np.ndarray:
 class _BuiltInDataset:
     """A class representing a built-in dataset."""
 
-    def __init__(self, name, data, header=None, data_scaled=None, n_clusters=None, pca=None, tsne=None, umap=None):
-        self.name = name
-        self.data = data
+    def __init__(self, name):
+        self._name = name
+        self._header = None
+        self._n_clusters = None
 
-        self.header = header
-        self.data_scaled = data_scaled if data_scaled is not None else self.data
-        self.n_clusters = n_clusters
-        self.pca = pca
-        self.tsne = tsne
-        self.umap = umap
+        self._data = None
+        self._data_scaled = None
+
+        self._pca = None
+        self._tsne = None
+        self._umap = None
+
+    def toDict(self, insertData=True, insertProjections=True):
+        d = Bunch(
+            name=self.name,
+            header=self.header,
+            n_clusters=self.n_clusters,
+            # data=self.data,
+            # data_scaled=self.data_scaled,
+            # projections=Bunch(pca=self.pca, tsne=self.tsne, umap=self.umap),
+        )
+
+        if insertData:
+            d["data"] = self.data
+            d["data_scaled"] = self.data_scaled
+
+        if insertProjections:
+            d["projections"] = Bunch(pca=self.pca, tsne=self.tsne, umap=self.umap)
+
+        return d
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def header(self):
+        if self._header is None:
+            self._header = _loadPackageFile_npy(f"_npy/{self.name}.header.npy")
+        return self._header
+
+    @property
+    def n_clusters(self):
+        if self._n_clusters is None:
+            self._n_clusters = _default_num_clusters[self.name]
+        return self._n_clusters
+
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = _loadPackageFile_npy(f"_npy/{self.name}.npy")
+        return self._data
+
+    @property
+    def data_scaled(self):
+        if self._data_scaled is None:
+            self._data_scaled = _loadPackageFile_npy(f"_npy/{self.name}.scaled.npy")
+        return self._data_scaled
+
+    @property
+    def pca(self):
+        if self._pca is None:
+            self._pca = _loadPackageFile_npy(f"_npy/{self.name}.pca.npy")
+        return self._pca
+
+    @property
+    def tsne(self):
+        if self._tsne is None:
+            self._tsne = _loadPackageFile_npy(f"_npy/{self.name}.tsne.npy")
+        return self._tsne
+
+    @property
+    def umap(self):
+        if self._umap is None:
+            self._umap = _loadPackageFile_npy(f"_npy/{self.name}.umap.npy")
+        return self._umap
 
     def __str__(self):
         return f"{self.__class__.__name__}<{self.name}> shape={self.data.shape}"
@@ -105,17 +172,6 @@ class BuiltInDatasetLoader(ABC):
 
     @staticmethod
     def load(name) -> _BuiltInDataset:
-        """Return a dataset given the name.
-        The dataset is dictionary: {'name': str, 'n_clusters': int, 'data': ndarray}"""
+        """Return a built-in dataset given the name."""
         _checkName(name)
-        d = _BuiltInDataset(
-            name,
-            _loadPackageFile_npy(f"_npy/{name}.npy"),
-            header=_loadPackageFile_npy(f"_npy/{name}.header.npy"),
-            data_scaled=_loadPackageFile_npy(f"_npy/{name}.scaled.npy"),
-            n_clusters=_default_num_clusters[name],
-            pca=_loadPackageFile_npy(f"_npy/{name}.pca.npy"),
-            tsne=_loadPackageFile_npy(f"_npy/{name}.tsne.npy"),
-            umap=_loadPackageFile_npy(f"_npy/{name}.umap.npy"),
-        )
-        return d
+        return _BuiltInDataset(name)

@@ -120,6 +120,7 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
         self.random_state = random_state
         self.init = init
 
+        self._killed = False
         self._completed = False
         self._converged = False
         self._convergedStrict = False
@@ -222,7 +223,10 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
             return _composePartialResult(self._iteration, self._completed, inertia, self._centers, self._labels)
 
     def hasNextIteration(self) -> bool:
-        return not self._completed
+        return not self._completed and not self._killed
 
     def executeNextIteration(self) -> RunPartialResult:
         return self._executeNextIteration()
+
+    def kill(self):
+        self._killed = True

@@ -17,6 +17,10 @@ class ProgressiveClusteringRun(ABC):
     def executeNextIteration(self) -> RunPartialResult:
         pass
 
+    @abstractmethod
+    def kill(self):
+        pass
+
 
 class ProgressiveClusteringEnsemble(ABC):
     """
@@ -29,6 +33,40 @@ class ProgressiveClusteringEnsemble(ABC):
 
     @abstractmethod
     def executeNextIteration(self) -> EnsemblePartialResult:
+        pass
+
+    @abstractmethod
+    def executeAllIterations(self) -> EnsemblePartialResult:
+        pass
+
+    @abstractmethod
+    def kill(self):
+        pass
+
+    @abstractmethod
+    def killRun(self, run):
+        pass
+
+
+class ProgressiveClusteringEnsembleElbow(ABC):
+    """
+    The ProgressiveClusteringEnsembleElbow interface declares the hasNextIteration() and  executeNextIteration() methods.
+    """
+
+    @abstractmethod
+    def hasNextIteration(self) -> bool:
+        pass
+
+    @abstractmethod
+    def executeNextIteration(self) -> EnsemblePartialResult:
+        pass
+
+    @abstractmethod
+    def executeAllIterations(self) -> EnsemblePartialResult:
+        pass
+
+    @abstractmethod
+    def kill(self):
         pass
 
 
