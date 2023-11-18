@@ -2,9 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import numpy as np
-
-from ..results.ensemble import EnsemblePartialResult
-from .interfaces import ProgressiveClusteringEnsemble
+from sklearn.utils._param_validation import InvalidParameterError
 
 
 def _check_output_action(func):
@@ -25,7 +23,7 @@ class EarlyTerminationAction(Enum):
     KILL = "kill"
 
 
-class EarlyTerminator(ABC):
+class AbstractEarlyTerminator(ABC):
     """Early Terminator interface."""
 
     def __init__(self, name: str):
@@ -33,24 +31,27 @@ class EarlyTerminator(ABC):
 
     @_check_output_action
     @abstractmethod
-    def checkEarlyTermination(self, partialResult: EnsemblePartialResult):
+    def checkEarlyTermination(self, partialResult):
         """Method called by the ensemble to check if early termination occurs, at each partial result.
         The implementation of this function must return a value from EarlyTerminationAction.
         """
         pass
 
 
-class _RatioInertiaEarlyTerminator(EarlyTerminator, ABC):
-    """Early Terminator that kill the ensemble when the termination occurs."""
+class _ET(AbstractEarlyTerminator, ABC):
+    """Generic early Terminator based on ratio inertia."""
 
-    def __init__(self, name: str, threshold: float, action, minIteration=4):
+    def __init__(self, name: str, threshold: float, action=EarlyTerminationAction.NOTIFY, minIteration=4):
         super().__init__(name)
         self.threshold = threshold
         self.minIteration = minIteration
         self.action = action
         self.lastInertia = None
 
-    def checkEarlyTermination(self, partialResult: EnsemblePartialResult):
+        if action not in EarlyTerminationAction:
+            raise InvalidParameterError(f"The action={action} does not exist as an EarlyTerminationAction.")
+
+    def checkEarlyTermination(self, partialResult):
         currentInertia = partialResult.metrics.inertia
 
         if self.lastInertia is not None:
@@ -62,14 +63,14 @@ class _RatioInertiaEarlyTerminator(EarlyTerminator, ABC):
         return EarlyTerminationAction.NONE
 
 
-class RatioInertiaEarlyTerminatorKiller(_RatioInertiaEarlyTerminator):
+class EarlyTerminatorKiller(_ET):
     """Early Terminator that kill the ensemble when the termination occurs."""
 
     def __init__(self, name: str, threshold: float, minIteration=4):
         super().__init__(name, threshold, EarlyTerminationAction.KILL, minIteration)
 
 
-class RatioInertiaEarlyTerminatorNotifier(_RatioInertiaEarlyTerminator):
+class EarlyTerminatorNotifier(_ET):
     """Early Terminator that notify the ensemble when the termination occurs."""
 
     def __init__(self, name: str, threshold: float, minIteration=4):
@@ -77,8 +78,8 @@ class RatioInertiaEarlyTerminatorNotifier(_RatioInertiaEarlyTerminator):
 
 
 __all__ = [
-    "EarlyTerminator",
+    "AbstractEarlyTerminator",
     "EarlyTerminationAction",
-    "RatioInertiaEarlyTerminatorKiller",
-    "RatioInertiaEarlyTerminatorNotifier",
+    "EarlyTerminatorKiller",
+    "EarlyTerminatorNotifier",
 ]

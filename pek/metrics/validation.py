@@ -5,8 +5,9 @@ from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.validation import _check_sample_weight
 
-from ..data.utils import intArray
-from .utils import _getClusters
+from ..utils.clustering import getClusters
+
+"""Clustering validation metrics."""
 
 
 def calinskiHarabasz(data, labels) -> float:
@@ -23,7 +24,7 @@ def daviesBouldinIndex(data, labels) -> float:
 
 def dunnIndex(data, labels) -> float:
     """Dunn Index. Better max."""
-    clusters, centers = _getClusters(data, labels)
+    clusters, centers = getClusters(data, labels)
     centers_pairwise_distances = skmetrics.pairwise.euclidean_distances(centers)
 
     max_cluster_diameter = 0
@@ -50,7 +51,7 @@ def inertia(data, labels) -> float:
     # print(labels.shape, labels.dtype, labels.flags)
     # print("\n\n\n")
 
-    clusters, centers = _getClusters(data, labels)
+    clusters, centers = getClusters(data, labels)
     sample_weight = _check_sample_weight(None, data, dtype=data.dtype)
     n_threads = _openmp_effective_n_threads()
     result = _inertia_fn(data, sample_weight, centers, labels.astype(np.int32), n_threads)
@@ -66,7 +67,7 @@ def silhouette(data, labels) -> float:
 def simplifiedSilhouette(data, labels) -> float:
     """Simplified Silhouette Coefficient of all samples. Better max."""
     n = data.shape[0]
-    clusters, centers = _getClusters(data, labels)
+    clusters, centers = getClusters(data, labels)
     distances = skmetrics.pairwise.euclidean_distances(data, centers)  # distance of each point to all centroids
 
     A = distances[np.arange(n), labels]  # distance of each point to its cluster centroid
@@ -80,19 +81,18 @@ def simplifiedSilhouette(data, labels) -> float:
     return float(S)
 
 
-def all():
-    return {
-        "calinski_harabasz": calinskiHarabasz,
-        "davies_bouldin": daviesBouldinIndex,
-        "dunn_index": dunnIndex,
-        "inertia": inertia,
-        "silhouette": silhouette,
-        "simplified_silhouette": simplifiedSilhouette,
-    }
+ALL_VALIDATION_METRICS = {
+    "calinski_harabasz": calinskiHarabasz,
+    "davies_bouldin": daviesBouldinIndex,
+    "dunn_index": dunnIndex,
+    "inertia": inertia,
+    "silhouette": silhouette,
+    "simplified_silhouette": simplifiedSilhouette,
+}
 
 
 __all__ = [
-    "all",
+    "ALL_VALIDATION_METRICS",
     "calinskiHarabasz",
     "daviesBouldinIndex",
     "dunnIndex",

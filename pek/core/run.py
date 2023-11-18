@@ -2,8 +2,6 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-
-# from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
 from sklearn.cluster._k_means_lloyd import (
     lloyd_iter_chunked_dense,
     lloyd_iter_chunked_sparse,
@@ -23,13 +21,29 @@ from sklearn.utils.fixes import threadpool_limits
 from sklearn.utils.validation import _check_sample_weight
 
 from ..metrics.validation import inertia as inertia_fn
-from ..results.run import (
-    RunPartialResult,
-    RunPartialResultInfo,
-    RunPartialResultMetrics,
-)
-from .interfaces import ProgressiveClusteringRun
-from .utils import best_labels_dtype
+from ..utils.clustering import best_labels_dtype
+
+
+class RunPartialResult(Bunch):
+    def __init__(self, info, metrics, centroids, labels):
+        if not isinstance(info, RunPartialResultInfo):
+            raise TypeError("info is not instance of RunPartialResultInfo.")
+        if not isinstance(metrics, RunPartialResultMetrics):
+            raise TypeError("metrics is not instance of RunPartialResultMetrics.")
+        super().__init__(info=info, metrics=metrics, centroids=centroids, labels=labels)
+
+
+class RunPartialResultInfo(Bunch):
+    def __init__(self, iteration, isLast):
+        super().__init__(
+            iteration=iteration,
+            isLast=isLast,
+        )
+
+
+class RunPartialResultMetrics(Bunch):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 def _composePartialResult(iteration, completed, inertia, centroids, labels):
@@ -38,7 +52,7 @@ def _composePartialResult(iteration, completed, inertia, centroids, labels):
     return RunPartialResult(info, metrics, centroids, labels.astype(best_labels_dtype(len(centroids))))
 
 
-class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
+class ProgressiveKMeans(_BaseKMeans):
     """Progressive KMeans Algorithm. Using Lloyd Algorithm.\n
     Code edited from scikit-learn 1.3.0\n
     https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/cluster/_kmeans.py
@@ -227,6 +241,12 @@ class ProgressiveKMeansRun(_BaseKMeans, ProgressiveClusteringRun):
 
     def executeNextIteration(self) -> RunPartialResult:
         return self._executeNextIteration()
+
+    def executeAllIterations(self):
+        r = None
+        while self.hasNextIteration():
+            r = self.executeNextIteration()
+        return r
 
     def kill(self):
         self._killed = True

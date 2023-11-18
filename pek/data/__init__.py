@@ -1,1 +1,2 @@
-from .dataset import BuiltInDatasetLoader
+from .dataset import Dataset
+from .loader import DatasetLoader
