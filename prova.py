@@ -1,12 +1,29 @@
-from pek import ProgressiveElbow
+import time
+
+from pek import ProgressiveElbow, ProgressiveEnsembleKMeans
 from pek.data import DatasetLoader
-from pek.termination import EarlyTerminatorKiller
 
-dataset = DatasetLoader.load("Wine")
 
-eb = ProgressiveElbow(
-    dataset.data, n_clusters_arr=list(range(2, 11)), n_runs=16, et=EarlyTerminatorKiller("fast", 1e-2)
-)
-while eb.hasNextIteration():
-    r = eb.executeNextIteration()
-    print(r.info, r.metrics)
+def main():
+    dataset = DatasetLoader.load("LiverDisorder")
+
+    km = ProgressiveEnsembleKMeans(
+        dataset.data,
+        n_clusters=6,
+        n_runs=16,
+        random_state=396350967,
+        labelsValidationMetrics="ALL",
+        labelsComparisonMetrics="ALL",
+        labelsProgressionMetrics="ALL",
+        partitionsValidationMetrics="ALL",
+        partitionsComparisonMetrics="ALL",
+        partitionsProgressionMetrics="ALL",
+        ets=["slow-notify", "fast-notify"],
+    )
+    while km.hasNextIteration():
+        r = km.executeNextIteration()
+        print(r.info, r.earlyTermination)
+
+
+if __name__ == "__main__":
+    main()

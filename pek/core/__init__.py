@@ -1,3 +1,3 @@
-from .elbow import ProgressiveElbow
-from .ensemble import ProgressiveEnsembleKMeans
+from .elbow import ProgressiveElbow, ProgressiveElbowProcess
+from .ensemble import ProgressiveEnsembleKMeans, ProgressiveEnsembleKMeansProcess
 from .run import ProgressiveKMeans

@@ -21,7 +21,8 @@ from sklearn.utils.fixes import threadpool_limits
 from sklearn.utils.validation import _check_sample_weight
 
 from ..metrics.validation import inertia as inertia_fn
-from ..utils.clustering import best_labels_dtype
+
+# from ..utils.clustering import best_labels_dtype
 
 
 class RunPartialResult(Bunch):
@@ -49,7 +50,7 @@ class RunPartialResultMetrics(Bunch):
 def _composePartialResult(iteration, completed, inertia, centroids, labels):
     info = RunPartialResultInfo(iteration, completed)
     metrics = RunPartialResultMetrics(inertia=inertia)
-    return RunPartialResult(info, metrics, centroids, labels.astype(best_labels_dtype(len(centroids))))
+    return RunPartialResult(info, metrics, centroids, labels)
 
 
 class ProgressiveKMeans(_BaseKMeans):

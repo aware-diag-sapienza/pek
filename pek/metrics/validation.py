@@ -3,6 +3,7 @@ import scipy.sparse as sp
 from sklearn import metrics as skmetrics
 from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils.validation import _check_sample_weight
 
 from ..utils.clustering import getClusters
@@ -81,7 +82,7 @@ def simplifiedSilhouette(data, labels) -> float:
     return float(S)
 
 
-ALL_VALIDATION_METRICS = {
+ALL_VALIDATION_METRICS_DICT = {
     "calinski_harabasz": calinskiHarabasz,
     "davies_bouldin": daviesBouldinIndex,
     "dunn_index": dunnIndex,
@@ -90,9 +91,47 @@ ALL_VALIDATION_METRICS = {
     "simplified_silhouette": simplifiedSilhouette,
 }
 
+ALL_VALIDATION_METRICS = sorted(ALL_VALIDATION_METRICS_DICT.keys())
+
+
+def _checkValidationMetric(metricName):
+    """
+    Validate a given metric name against the predefined dictionary of valid validation metrics.
+
+    Parameters:
+    - metricName (str): The name of the validation metric to be checked.
+
+    Returns:
+    - The validation metric function.
+
+    Raises:
+    - InvalidParameterError: If the provided metric name is not found in the predefined dictionary,
+      indicating that the validation metric does not exist.
+    """
+    if metricName in ALL_VALIDATION_METRICS_DICT:
+        return ALL_VALIDATION_METRICS_DICT[metricName]
+    else:
+        raise InvalidParameterError(f"The '{metricName}' validation metric does not exist.")
+
+
+def _toValidationMetricDict(metricNameArr):
+    """Generate a dict of validation metrics {name: function} given the arrays of names."""
+    if metricNameArr is None:
+        return {}
+
+    if metricNameArr == "ALL":
+        return ALL_VALIDATION_METRICS_DICT
+
+    result = {}
+    for metricName in metricNameArr:
+        result[metricName] = _checkValidationMetric(metricName)
+
+    return result
+
 
 __all__ = [
     "ALL_VALIDATION_METRICS",
+    "ALL_VALIDATION_METRICS_DICT",
     "calinskiHarabasz",
     "daviesBouldinIndex",
     "dunnIndex",

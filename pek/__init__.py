@@ -1,2 +1,6 @@
 from . import data, metrics, termination
-from .core import ProgressiveElbow, ProgressiveEnsembleKMeans, ProgressiveKMeans
+from .core import (  # ProgressiveElbowProcess,; ProgressiveEnsembleKMeansProcess,
+    ProgressiveElbow,
+    ProgressiveEnsembleKMeans,
+    ProgressiveKMeans,
+)

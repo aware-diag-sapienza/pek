@@ -1,8 +1,11 @@
+import json
 import pkgutil
 from io import BytesIO
 
 import numpy as np
 from sklearn.utils import Bunch
+
+from ..utils.encoding import NumpyEncoder
 
 
 def _loadPackageFile_npy(filePath) -> np.ndarray:
@@ -40,6 +43,11 @@ class Dataset:
             d["projections"] = Bunch(pca=self.pca, tsne=self.tsne, umap=self.umap)
 
         return d
+
+    def toJson(self, insertData=True, insertProjections=True, indent=None):
+        return json.dumps(
+            self.toDict(insertData=insertData, insertProjections=insertProjections), cls=NumpyEncoder, indent=indent
+        )
 
     @property
     def name(self):
