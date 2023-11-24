@@ -28,7 +28,7 @@ if __name__ == "__main__":
         package_data={"pek.data._npy": ["*.npy"]},
         include_package_data=True,
         zip_safe=True,
-        download_url=f"https://github.com/aware-diag-sapienza/pek/archive/refs/tags/{__version__}.tar.gz",
+        download_url=f"https://github.com/aware-diag-sapienza/pek/archive/refs/tags/v{__version__}.tar.gz",
         long_description=open(Path("PyPI.md")).read(),
         long_description_content_type="text/markdown",
     )
