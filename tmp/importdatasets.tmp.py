@@ -9,7 +9,7 @@ from umap import UMAP
 
 d = {}
 
-for file in sorted(Path("csv").glob("*.csv"), key=lambda p: p.stem):
+for file in sorted(Path("../csv").glob("*.csv"), key=lambda p: p.stem):
     name = file.stem.split("_")[0]
     n_clusters = int(file.stem.split("_")[1])
     d[name] = n_clusters

@@ -7,7 +7,7 @@ if __name__ == "__main__":
     setup(
         name="pek",
         version=__version__,
-        description="PEK - Progressive Ensemble K-Means Clustering",
+        description="PEK - Progressive Ensemble K-means clustering",
         url="https://aware-diag-sapienza.github.io/pek",
         author="A.WA.RE Research Group - Sapienza Università di Roma",
         author_email="graziano.blasilli@uniroma1.it",
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         package_data={"pek.data._npy": ["*.npy"]},
         include_package_data=True,
         zip_safe=True,
-        download_url=f"https://github.com/aware-diag-sapienza/pek/archive/refs/tags/v{__version__}.tar.gz",
-        # long_description=open(Path("PyPI.md")).read(),
-        # long_description_content_type="text/markdown",
+        download_url=f"https://github.com/aware-diag-sapienza/pek/archive/refs/tags/{__version__}.tar.gz",
+        long_description=open(Path("PyPI.md")).read(),
+        long_description_content_type="text/markdown",
     )

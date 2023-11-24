@@ -7,6 +7,7 @@ from flask_socketio import SocketIO, join_room
 from sklearn.utils import Bunch
 
 from ..data import DatasetLoader
+from ..version import __version__
 from .log import Log
 
 """
@@ -32,16 +33,23 @@ class WebSocketServer(Thread):
         self.app = app
         self.socketio = socketio
 
+        ############ STATIC DATA ###############
+
+        @socketio.on("get-pek-version")
+        def handle_get_pek_version(_):
+            return __version__
+
         @socketio.on("get-datasets-list")
-        def handle_get_datasets_list(data):
+        def handle_get_datasets_list(_):
             return DatasetLoader.allNames()
 
         @socketio.on("get-dataset")
-        def handle_get_dataset(name):
-            dataset = DatasetLoader.load(name)
+        def handle_get_dataset(datajson):
+            d = Bunch(**json.loads(datajson))  # {'name': '...', 'insertData': bool}
+            dataset = DatasetLoader.load(d.name)
             if dataset is None:
                 return None
-            return dataset.toJson(insertData=False)
+            return dataset.toJson(insertData=d.insertData)
 
         ############ TASK CREATION ###############
 

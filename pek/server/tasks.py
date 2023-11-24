@@ -2,7 +2,10 @@ import uuid
 from abc import ABC
 from enum import StrEnum
 
-from ..core import ProgressiveElbowProcess, ProgressiveEnsembleKMeansProcess
+from ..clustering import (
+    ProgressiveEnsembleElbowProcess,
+    ProgressiveEnsembleKMeansProcess,
+)
 from ..data import DatasetLoader
 
 
@@ -70,4 +73,4 @@ class ElbowTask(_Task):
         X = DatasetLoader.load(args["dataset"]).data
         args["resultsQueue"] = queue
         args["taskId"] = self.id
-        self.process = ProgressiveElbowProcess(X, **args)
+        self.process = ProgressiveEnsembleElbowProcess(X, **args)

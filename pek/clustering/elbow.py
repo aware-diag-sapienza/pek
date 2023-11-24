@@ -99,7 +99,7 @@ class _AbstractElbow(ABC):
         return None"""
 
 
-class ProgressiveElbow(_AbstractElbow):
+class ProgressiveEnsembleElbow(_AbstractElbow):
     def __init__(
         self,
         X,
@@ -224,7 +224,7 @@ class ProgressiveElbow(_AbstractElbow):
         self._killed = True
 
 
-class ProgressiveElbowProcess(Process):
+class ProgressiveEnsembleElbowProcess(Process):
     def __init__(
         self,
         X,
@@ -245,7 +245,7 @@ class ProgressiveElbowProcess(Process):
     ):
         super().__init__()
 
-        self._elbow = ProgressiveElbow(
+        self._elbow = ProgressiveEnsembleElbow(
             X,
             n_clusters_arr=n_clusters_arr,
             n_runs=n_runs,

@@ -1,6 +1,6 @@
 from . import data, metrics, termination
-from .core import (  # ProgressiveElbowProcess,; ProgressiveEnsembleKMeansProcess,
-    ProgressiveElbow,
+from .clustering import (
+    ProgressiveEnsembleElbow,
     ProgressiveEnsembleKMeans,
     ProgressiveKMeans,
 )
