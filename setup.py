@@ -15,7 +15,7 @@ if __name__ == "__main__":
         platforms=["Linux", "Mac OS-X", "Solaris", "Unix", "Windows"],
         packages=[
             "pek",
-            "pek.core",
+            "pek.clustering",
             "pek.data",
             "pek.data._npy",
             "pek.metrics",
