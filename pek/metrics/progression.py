@@ -42,6 +42,10 @@ def entries_stability_3(labelsHistoryArr):
     return _entries_stability(labelsHistoryArr, 3)
 
 
+def entries_stability_4(labelsHistoryArr):
+    return _entries_stability(labelsHistoryArr, 3)
+
+
 def entries_stability_5(labelsHistoryArr):
     return _entries_stability(labelsHistoryArr, 5)
 
@@ -62,6 +66,10 @@ def global_stability_3(labelsHistoryArr):
     return _global_stability(labelsHistoryArr, 3)
 
 
+def global_stability_4(labelsHistoryArr):
+    return _global_stability(labelsHistoryArr, 4)
+
+
 def global_stability_5(labelsHistoryArr):
     return _global_stability(labelsHistoryArr, 5)
 
@@ -77,11 +85,13 @@ def global_stability_all(labelsHistoryArr):
 ALL_PROGRESSION_METRICS_DICT = {
     "entries_stability_2": entries_stability_2,
     "entries_stability_3": entries_stability_3,
+    "entries_stability_4": entries_stability_4,
     "entries_stability_5": entries_stability_5,
     "entries_stability_10": entries_stability_10,
     "entries_stability_all": entries_stability_all,
     "global_stability_2": global_stability_2,
     "global_stability_3": global_stability_3,
+    "global_stability_4": global_stability_4,
     "global_stability_5": global_stability_5,
     "global_stability_10": global_stability_10,
     "global_stability_all": global_stability_all,
@@ -129,11 +139,13 @@ __all__ = [
     "ALL_PROGRESSION_METRICS_DICT",
     "entries_stability_2",
     "entries_stability_3",
+    "entries_stability_4",
     "entries_stability_5",
     "entries_stability_10",
     "entries_stability_all",
     "global_stability_2",
     "global_stability_3",
+    "global_stability_4",
     "global_stability_5",
     "global_stability_10",
     "global_stability_all",

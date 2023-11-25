@@ -47,8 +47,8 @@ class EnsemblePartialResultInfo(_Result):
 
 
 class EnsemblePartialResultRunsStatus(_Result):
-    def __init__(self, runCompleted=None, runsKilled=None):
-        super().__init__(runCompleted=runCompleted, runsKilled=runsKilled)
+    def __init__(self, runIteration=None, runCompleted=None, runsKilled=None):
+        super().__init__(runIteration=runIteration, runCompleted=runCompleted, runsKilled=runsKilled)
 
 
 class MetricGroup(_Result):

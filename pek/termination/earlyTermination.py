@@ -52,7 +52,7 @@ class AbstractEarlyTerminator(ABC):
 class _EarlyTerminatorRatioInertia(AbstractEarlyTerminator):
     """Generic early Terminator based on ratio inertia."""
 
-    def __init__(self, name: str, threshold: float, action=EarlyTerminationAction.NOTIFY, minIteration=4):
+    def __init__(self, name: str, threshold: float, action=EarlyTerminationAction.NOTIFY, minIteration=5):
         super().__init__(name)
         self.threshold = threshold
         self.minIteration = minIteration
@@ -68,7 +68,7 @@ class _EarlyTerminatorRatioInertia(AbstractEarlyTerminator):
 
         if self._lastInertia is not None:
             ratioInertiaPrev = currentInertia / self._lastInertia
-            if (np.abs(1 - ratioInertiaPrev) <= self.threshold) and partialResult.info.iteration >= 4:
+            if (np.abs(1 - ratioInertiaPrev) <= self.threshold) and partialResult.info.iteration >= self.minIteration:
                 return self.action
 
         self._lastInertia = currentInertia
@@ -78,14 +78,14 @@ class _EarlyTerminatorRatioInertia(AbstractEarlyTerminator):
 class _EarlyTerminatorKiller(_EarlyTerminatorRatioInertia):
     """Early Terminator that kills the ensemble when the termination occurs."""
 
-    def __init__(self, name: str, threshold: float, minIteration=4):
+    def __init__(self, name: str, threshold: float, minIteration=5):
         super().__init__(name, threshold, EarlyTerminationAction.KILL, minIteration)
 
 
 class _EarlyTerminatorNotifier(_EarlyTerminatorRatioInertia):
     """Early Terminator that notifies the ensemble when the termination occurs."""
 
-    def __init__(self, name: str, threshold: float, minIteration=4):
+    def __init__(self, name: str, threshold: float, minIteration=5):
         super().__init__(name, threshold, EarlyTerminationAction.NOTIFY, minIteration)
 
 
@@ -95,10 +95,10 @@ class _EarlyTerminatorNotifier(_EarlyTerminatorRatioInertia):
 ########################################################################################################################
 
 _DEFAULT_ET = {
-    "fast-notify": _EarlyTerminatorNotifier("fast", _T_FAST),
-    "fast-kill": _EarlyTerminatorKiller("fast", _T_FAST),
-    "slow-notify": _EarlyTerminatorNotifier("slow", _T_SLOW),
-    "slow-kill": _EarlyTerminatorKiller("slow", _T_SLOW),
+    "fast-notify": _EarlyTerminatorNotifier("fast-notify", _T_FAST),
+    "fast-kill": _EarlyTerminatorKiller("fast-kill", _T_FAST),
+    "slow-notify": _EarlyTerminatorNotifier("slow-notify", _T_SLOW),
+    "slow-kill": _EarlyTerminatorKiller("slow-kill", _T_SLOW),
 }
 
 
@@ -115,7 +115,7 @@ class EarlyTerminatorKiller:
     FAST = _DEFAULT_ET["fast-kill"]
 
     @staticmethod
-    def CUSTOM(name: str, threshold: float, minIteration=4):
+    def CUSTOM(name: str, threshold: float, minIteration=5):
         return _EarlyTerminatorKiller(name, threshold, minIteration=minIteration)
 
 
@@ -126,7 +126,7 @@ class EarlyTerminatorNotifier:
     FAST = _DEFAULT_ET["fast-notify"]
 
     @staticmethod
-    def CUSTOM(name: str, threshold: float, minIteration=4):
+    def CUSTOM(name: str, threshold: float, minIteration=5):
         return _EarlyTerminatorNotifier(name, threshold, minIteration=minIteration)
 
 

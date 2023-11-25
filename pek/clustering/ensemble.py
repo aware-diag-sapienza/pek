@@ -156,10 +156,11 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
             )
             self._runs.append(r)
 
-        self._partitions = np.zeros((self._X.shape[0], self._n_runs), dtype=int)
+        self._partitions = np.zeros((self._n_runs, self._X.shape[0]), dtype=int)
         self._centroids = np.zeros((self._n_clusters, self._X.shape[1], self._n_runs), dtype=float)
         self._runsLastPartialResultInfo = [None for _ in range(self._n_runs)]
         self._runsLastPartialResultMetrics = [None for _ in range(self._n_runs)]
+        self._runsIteration = [None for _ in range(self._n_runs)]
         self._runsCompleted = [False for _ in range(self._n_runs)]
         self._runsKilled = [False for _ in range(self._n_runs)]
         self._runsInertia = [np.inf for _ in range(self._n_runs)]
@@ -172,16 +173,17 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
 
         # compute an iteration of each run
         iterationCost = 0
-        for j in range(self._n_runs):
-            if self._runs[j].hasNextIteration():
+        for i in range(self._n_runs):
+            if self._runs[i].hasNextIteration():
                 iterationCost += 1
-                rp = self._runs[j].executeNextIteration()
-                self._partitions[:, j] = rp.labels
-                self._centroids[:, :, j] = rp.centroids
-                self._runsLastPartialResultInfo[j] = rp.info
-                self._runsLastPartialResultMetrics[j] = rp.metrics
-                self._runsCompleted[j] = rp.info.isLast
-                self._runsInertia[j] = rp.metrics.inertia
+                rp = self._runs[i].executeNextIteration()
+                self._partitions[i, :] = rp.labels
+                self._centroids[:, :, i] = rp.centroids
+                self._runsLastPartialResultInfo[i] = rp.info
+                self._runsLastPartialResultMetrics[i] = rp.metrics
+                self._runsCompleted[i] = rp.info.isLast
+                self._runsInertia[i] = rp.metrics.inertia
+                self._runsIteration[i] = rp.info.iteration
 
         self._iteration += 1
         self._completed = np.all([not self._runs[j].hasNextIteration() for j in range(self._n_runs)])
@@ -189,13 +191,13 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
         # choose the champion
         bestRunIndex = int(np.argmin(self._runsInertia))
         bestCentroids = self._centroids[:, :, bestRunIndex]
-        bestLabels = self._partitions[:, bestRunIndex]
+        bestLabels = self._partitions[bestRunIndex, :]
         bestInertia = float(self._runsInertia[bestRunIndex])
 
         # minimize label changing
         if self._prevResultCentroids is not None:
-            self._partitions[:, bestRunIndex] = adjustLabels(bestLabels, bestCentroids, self._prevResultCentroids)
-            bestLabels = self._partitions[:, bestRunIndex]
+            self._partitions[bestRunIndex, :] = adjustLabels(bestLabels, bestCentroids, self._prevResultCentroids)
+            bestLabels = self._partitions[bestRunIndex, :]
 
         # create the partial result (info)
         last = not self.hasNextIteration()
@@ -211,9 +213,12 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
         )
 
         # runsStatus
+        runIteration_str = "-".join(map(str, np.array(self._runsIteration).astype(int)))
         runCompleted_str = "-".join(map(str, np.array(self._runsCompleted).astype(int)))
         runsKilled_str = "-".join(map(str, np.array(self._runsKilled).astype(int)))
-        runsStatus = EnsemblePartialResultRunsStatus(runCompleted=runCompleted_str, runsKilled=runsKilled_str)
+        runsStatus = EnsemblePartialResultRunsStatus(
+            runIteration=runIteration_str, runCompleted=runCompleted_str, runsKilled=runsKilled_str
+        )
 
         # create the partial result (metrics)
         metrics = self._metricsCalculator.getMetrics(bestRunIndex, self._runsInertia, self._centroids, self._partitions)
@@ -327,7 +332,7 @@ class _EnsembleMetricsCalculator:
     def _compute_labelsValidationMetrics(self, bestRunIndex, runsInertia, centroids, partitions):
         """Labels validation metrics are computed only on the current best labels."""
         bestInertia = float(runsInertia[bestRunIndex])
-        bestLabels = partitions[:, bestRunIndex]
+        bestLabels = partitions[bestRunIndex, :]
 
         res = {"inertia": bestInertia}
         for metricName, metricFunction in self._labelsValidationMetrics.items():
@@ -339,7 +344,7 @@ class _EnsembleMetricsCalculator:
     def _compute_labelsComparisonMetrics(self, bestRunIndex, runsInertia, centroids, partitions):
         """Labels comparison metrics are computed comparing the current best labels with the previous best labels.
         The initial iteration has np.nan"""
-        bestLabels = partitions[:, bestRunIndex]
+        bestLabels = partitions[bestRunIndex, :]
 
         res = {}
         for metricName, metricFunction in self._labelsComparisonMetrics.items():
@@ -356,7 +361,7 @@ class _EnsembleMetricsCalculator:
 
     def _compute_labelsProgressionMetrics(self, bestRunIndex, runsInertia, centroids, partitions):
         if len(self._labelsProgressionMetrics) > 0:
-            self._labelsHistory.append(partitions[:, bestRunIndex])
+            self._labelsHistory.append(partitions[bestRunIndex, :])
 
         res = {}
         for metricName, metricFunction in self._labelsProgressionMetrics.items():
@@ -375,9 +380,9 @@ class _EnsembleMetricsCalculator:
         res = {"inertia": runsInertia}
         for metricName, metricFunction in self._partitionsValidationMetrics.items():
             if metricName not in res:
-                res[metricName] = np.empty(partitions.shape[1], dtype=float)
-                for j in range(partitions.shape[1]):
-                    res[metricName][j] = metricFunction(self._X, partitions[:, j])
+                res[metricName] = np.empty(partitions.shape[0], dtype=float)
+                for i in range(partitions.shape[0]):
+                    res[metricName][i] = metricFunction(self._X, partitions[i, :])
 
         return MetricGroup(**res)
 
@@ -386,7 +391,7 @@ class _EnsembleMetricsCalculator:
         Partitions comparison metrics are computed on each pair of partition.
         The result is a dictionary where each metric has a symmetric matrix RxR.
         """
-        n_runs = partitions.shape[1]
+        n_runs = partitions.shape[0]
         res = {}
         for metricName, metricFunction in self._partitionsComparisonMetrics.items():
             if metricName not in res:
@@ -396,7 +401,7 @@ class _EnsembleMetricsCalculator:
                     for j in range(n_runs):
                         if j >= i:
                             continue
-                        val = metricFunction(partitions[:, i], partitions[:, j])
+                        val = metricFunction(partitions[i, :], partitions[j, :])
                         res[metricName][i, j] = val
                         res[metricName][j, i] = val
 
@@ -406,15 +411,15 @@ class _EnsembleMetricsCalculator:
         if len(self._partitionsProgressionMetrics) > 0:
             self._partitionsHistory.append(partitions)
 
-        n_runs = partitions.shape[1]
+        n_runs = partitions.shape[0]
         res = {}
         for metricName, metricFunction in self._partitionsProgressionMetrics.items():
             if metricName not in res:
                 res[metricName] = [None for j in range(n_runs)]
-                for j in range(n_runs):
+                for i in range(n_runs):
                     if len(self._partitionsHistory) > 1:
-                        hist = [p[:, j] for p in self._partitionsHistory]
-                        res[metricName][j] = metricFunction(hist)
+                        hist = [p[i, :] for p in self._partitionsHistory]
+                        res[metricName][i] = metricFunction(hist)
 
         return MetricGroup(**res)
 
