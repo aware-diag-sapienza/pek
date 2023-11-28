@@ -14,11 +14,14 @@ def _entries_stability(labelsHistoryArr, window=None):
     else:
         hist = labelsHistoryArr[-window:]
 
-    stability = np.full_like(labelsHistoryArr[0], 0, dtype=float)
-    h = len(labelsHistoryArr)
+    if len(hist) == 1:
+        return np.full_like(hist[0], 0, dtype=float)
+
+    stability = np.full_like(hist[0], 0, dtype=float)
+    h = len(hist)
     w = [np.log(2 + i) for i in range(h - 1)]  # log weights
     for i in range(h - 1):
-        stability += ((labelsHistoryArr[h - 1] == labelsHistoryArr[i]).astype(float) * w[i]) / sum(w)
+        stability += ((hist[h - 1] == hist[i]).astype(float) * w[i]) / sum(w)
     return stability
 
 

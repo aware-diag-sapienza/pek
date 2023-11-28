@@ -343,7 +343,7 @@ class _EnsembleMetricsCalculator:
 
     def _compute_labelsComparisonMetrics(self, bestRunIndex, runsInertia, centroids, partitions):
         """Labels comparison metrics are computed comparing the current best labels with the previous best labels.
-        The initial iteration has np.nan"""
+        The initial iteration is Null"""
         bestLabels = partitions[bestRunIndex, :]
 
         res = {}

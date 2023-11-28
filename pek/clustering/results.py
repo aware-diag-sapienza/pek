@@ -94,10 +94,11 @@ class EnsemblePartialResultEarlyTermination(_Result):
 
 
 class ElbowPartialResult(_Result):
-    def __init__(self, info=None, metrics=None, taskId=None):
+    def __init__(self, info=None, metrics=None, labels=None, taskId=None):
         super().__init__(
             info=checkInstance(info, ElbowPartialResultInfo, "info"),
             metrics=checkInstance(metrics, ElbowPartialResultMetrics, "metrics"),
+            labels=labels,
             taskId=taskId,
         )
 
@@ -116,5 +117,10 @@ class ElbowPartialResultInfo(_Result):
 
 
 class ElbowPartialResultMetrics(_Result):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        labelsValidationMetrics=None,
+    ):
+        super().__init__(
+            labelsValidationMetrics=checkInstance(labelsValidationMetrics, MetricGroup, "labelsValidationMetrics")
+        )

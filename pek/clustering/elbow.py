@@ -26,6 +26,7 @@ from .results import (
     ElbowPartialResult,
     ElbowPartialResultInfo,
     ElbowPartialResultMetrics,
+    MetricGroup,
 )
 
 
@@ -54,7 +55,7 @@ class _AbstractElbow(ABC):
         tol=1e-4,
         random_state=None,
         et=None,  # early terminator (a single element or None),
-        validationMetrics=None,
+        labelsValidationMetrics=None,
         cache=False,
         freq=None,
         taskId=None,
@@ -67,10 +68,10 @@ class _AbstractElbow(ABC):
         self._tol = tol
         self._random_state = get_random_state(random_state)
         self._et = et
-        self._validationMetrics = _toValidationMetricDict(validationMetrics)
         self._cache = cache
         self._freq = freq
         self._taskId = taskId
+        self._metricsCalculator = _ElbowMetricsCalculator(X, labelsValidationMetrics=labelsValidationMetrics)
 
         self._etArray = [] if et is None else [et]
 
@@ -110,7 +111,7 @@ class ProgressiveEnsembleElbow(_AbstractElbow):
         tol=1e-4,
         random_state=None,
         et=None,
-        validationMetrics=None,
+        labelsValidationMetrics=None,
         cache=False,
         freq=None,
         taskId=None,
@@ -124,7 +125,7 @@ class ProgressiveEnsembleElbow(_AbstractElbow):
             tol=tol,
             random_state=random_state,
             et=et,
-            validationMetrics=validationMetrics,
+            labelsValidationMetrics=labelsValidationMetrics,
             cache=cache,
             freq=freq,
             taskId=taskId,
@@ -166,17 +167,22 @@ class ProgressiveEnsembleElbow(_AbstractElbow):
         )
 
         # compute the metrics
-        dictMetrics = {}  # {"inertia": ensembleLastResult.metrics.validation.inertia}
+        # create the partial result (metrics)
+        elbowResultMetrics = self._metricsCalculator.getMetrics(ensembleLastResult)
+
+        """dictMetrics = {}  # {"inertia": ensembleLastResult.metrics.validation.inertia}
         for metricName, metricFunction in self._validationMetrics.items():
             if metricName not in dictMetrics:
                 dictMetrics[metricName] = metricFunction(self._X, ensembleLastResult.labels)
-        elbowResultMetrics = ElbowPartialResultMetrics(**dictMetrics)
+        elbowResultMetrics = ElbowPartialResultMetrics(**dictMetrics)"""
 
         # set the elbow value
         elbowResultInfo.elbowPoint = self._computeElbowPoint()
 
         # create elbow result
-        elbowResult = ElbowPartialResult(info=elbowResultInfo, metrics=elbowResultMetrics, taskId=self._taskId)
+        elbowResult = ElbowPartialResult(
+            info=elbowResultInfo, metrics=elbowResultMetrics, taskId=self._taskId, labels=ensembleLastResult.labels
+        )
         self._results.append(elbowResult)
 
         # manage results frequency
@@ -235,7 +241,7 @@ class ProgressiveEnsembleElbowProcess(Process):
         tol=1e-4,
         random_state=None,
         et=None,
-        validationMetrics=None,
+        labelsValidationMetrics=None,
         cache=False,
         freq=None,
         taskId=None,
@@ -254,7 +260,7 @@ class ProgressiveEnsembleElbowProcess(Process):
             tol=tol,
             random_state=random_state,
             et=et,
-            validationMetrics=validationMetrics,
+            labelsValidationMetrics=labelsValidationMetrics,
             cache=cache,
             freq=freq,
             taskId=taskId,
@@ -322,3 +328,21 @@ class ProgressiveEnsembleElbowProcess(Process):
     def kill(self):
         msg = ProcessControlMessage.KILL()
         self._controlsQueue.put(msg)
+
+
+class _ElbowMetricsCalculator:
+    def __init__(self, X, labelsValidationMetrics=None):
+        self._X = X
+        self._labelsValidationMetrics = _toValidationMetricDict(labelsValidationMetrics)
+
+    def getMetrics(self, ensembleResult):
+        return ElbowPartialResultMetrics(labelsValidationMetrics=self._compute_labelsValidationMetrics(ensembleResult))
+
+    def _compute_labelsValidationMetrics(self, ensembleResult):
+        """Labels validation metrics are computed only on the current best labels."""
+        res = {"inertia": ensembleResult.metrics.labelsValidationMetrics.inertia}
+        for metricName, metricFunction in self._labelsValidationMetrics.items():
+            if metricName not in res:
+                res[metricName] = metricFunction(self._X, ensembleResult.labels)
+
+        return MetricGroup(**res)
