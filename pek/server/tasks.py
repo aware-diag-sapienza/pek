@@ -1,6 +1,6 @@
 import uuid
 from abc import ABC
-from enum import StrEnum
+from enum import Enum
 
 from ..clustering import (
     ProgressiveEnsembleElbowProcess,
@@ -9,7 +9,7 @@ from ..clustering import (
 from ..data import DatasetLoader
 
 
-class TaskStatus(StrEnum):
+class TaskStatus(Enum):
     pending = "pending"
     running = "running"
     paused = "paused"

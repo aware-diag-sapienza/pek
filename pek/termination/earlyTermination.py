@@ -5,8 +5,9 @@ import numpy as np
 from sklearn.utils import Bunch
 from sklearn.utils._param_validation import InvalidParameterError
 
-_T_SLOW = 5.256791e-05
-_T_FAST = 0.004361538
+
+_T_SLOW = 0.0002439986
+_T_FAST = 0.002024447
 
 
 def checkEarlyTerminationAction(action):
@@ -115,7 +116,7 @@ class EarlyTerminatorKiller:
     FAST = _DEFAULT_ET["fast-kill"]
 
     @staticmethod
-    def CUSTOM(name: str, threshold: float, minIteration=5):
+    def custom(name: str, threshold: float, minIteration=5):
         return _EarlyTerminatorKiller(name, threshold, minIteration=minIteration)
 
 
@@ -126,7 +127,7 @@ class EarlyTerminatorNotifier:
     FAST = _DEFAULT_ET["fast-notify"]
 
     @staticmethod
-    def CUSTOM(name: str, threshold: float, minIteration=5):
+    def custom(name: str, threshold: float, minIteration=5):
         return _EarlyTerminatorNotifier(name, threshold, minIteration=minIteration)
 
 

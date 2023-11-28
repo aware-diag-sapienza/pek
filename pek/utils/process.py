@@ -1,13 +1,13 @@
 import json
 from abc import ABC, abstractmethod
-from enum import StrEnum
+from enum import Enum
 from multiprocessing import Process, Queue
 
 from sklearn.utils import Bunch
 from sklearn.utils._param_validation import InvalidParameterError
 
 
-class ProcessStatus(StrEnum):
+class ProcessStatus(Enum):
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -15,7 +15,7 @@ class ProcessStatus(StrEnum):
     COMPLETED = "completed"
 
 
-class ProcessControlMessageType(StrEnum):
+class ProcessControlMessageType(Enum):
     START = "start"
     PAUSE = "pause"
     RESUME = "resume"

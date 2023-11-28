@@ -11,7 +11,7 @@ if __name__ == "__main__":
         url="https://aware-diag-sapienza.github.io/pek",
         author="A.WA.RE Research Group - Sapienza Università di Roma",
         author_email="graziano.blasilli@uniroma1.it",
-        license="GNU General Public License (GPL)",
+        license="CC-BY-NC-4.0",
         platforms=["Linux", "Mac OS-X", "Solaris", "Unix", "Windows"],
         packages=[
             "pek",
