@@ -64,19 +64,19 @@ class Dataset:
     @property
     def pca(self):
         if self._pca is None:
-            self._pca = _read(self._hdf5File, "pca")
+            self._pca = _read(self._hdf5File, "pca_proj")
         return self._pca
 
     @property
     def tsne(self):
         if self._tsne is None:
-            self._tsne = _read(self._hdf5File, "tsne")
+            self._tsne = _read(self._hdf5File, "tsne_proj")
         return self._tsne
 
     @property
     def umap(self):
         if self._umap is None:
-            self._umap = _read(self._hdf5File, "umap")
+            self._umap = _read(self._hdf5File, "umap_proj")
         return self._umap
 
     def __str__(self):

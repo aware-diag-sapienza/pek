@@ -52,7 +52,7 @@ class WebSocketServer(Thread):
             dataset = self._loadedDatasets[d.name]
             if dataset is None:
                 return None
-            return dataset.toJson(insertData=d.insertData)
+            return dataset.toJson(insertData=d.insertData, insertProjections=True)
 
         ############ TASK CREATION ###############
 

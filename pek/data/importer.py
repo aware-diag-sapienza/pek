@@ -79,7 +79,15 @@ class DatasetsImporter(ABC):
             raise NameError(f"The dataset '{name}' is not an imported dataset.")
 
     @staticmethod
-    def importDataset(inputFilePath, computePca=False, computeTsne=False, computeUmap=False, **kwargs) -> Path:
+    def importDataset(
+        inputFilePath,
+        sampleSizePercent=None,
+        sampleRandomState=None,
+        computePca=True,
+        computeTsne=False,
+        computeUmap=False,
+        **kwargs,
+    ) -> Path:
         """Import a csv dataset."""
         inputFilePath = Path(inputFilePath)
         datasetName = inputFilePath.stem
@@ -88,6 +96,10 @@ class DatasetsImporter(ABC):
 
         if not inputFilePath.exists():
             raise RuntimeError(f"The file {inputFilePath.resolve()} does not exist.")
+
+        if sampleSizePercent is not None:
+            if int(sampleSizePercent) <= 0 or int(sampleSizePercent) > 100:
+                raise RuntimeError(f"Invalid sample size percent {sampleSizePercent}.")
 
         if computeUmap:
             try:
@@ -103,6 +115,9 @@ class DatasetsImporter(ABC):
         with h5py.File(outputFilePath, "w") as hf:
             info = hf.create_dataset("__info__", data=np.zeros(1), compression="gzip", chunks=True)
             info.attrs["__version__"] = __version__
+            if sampleSizePercent is not None:
+                info.attrs["sampleSize"] = sampleSizePercent
+                info.attrs["sampleRandomState"] = sampleRandomState
 
             print(f"\tLoading input file ...")
             df = pd.read_csv(inputFilePath)
@@ -113,6 +128,13 @@ class DatasetsImporter(ABC):
 
             # data
             data = np.asarray(df.to_numpy(dtype=dtype), order="C")
+
+            if sampleSizePercent is not None:
+                totLen = data.shape[0]
+                sampledLen = int(np.ceil(totLen * float(sampleSizePercent) / 100))
+                print(f"\tSampling to {sampledLen} entries...")
+                data = np.random.default_rng(sampleRandomState).choice(data, sampledLen, replace=False)
+
             hf.create_dataset("data", data=data, compression="gzip", chunks=True)
 
             # projections
