@@ -24,6 +24,7 @@ class WebSocketServer(Thread):
 
         self.app = None
         self.socketio = None
+        self._loadedDatasets = {}
 
     def run(self) -> None:
         app = Flask(self.server.name)
@@ -46,7 +47,9 @@ class WebSocketServer(Thread):
         @socketio.on("get-dataset")
         def handle_get_dataset(datajson):
             d = Bunch(**json.loads(datajson))  # {'name': '...', 'insertData': bool}
-            dataset = DatasetLoader.load(d.name)
+            if d.name not in self._loadedDatasets:
+                self._loadedDatasets[d.name] = DatasetLoader.load(d.name)
+            dataset = self._loadedDatasets[d.name]
             if dataset is None:
                 return None
             return dataset.toJson(insertData=d.insertData)

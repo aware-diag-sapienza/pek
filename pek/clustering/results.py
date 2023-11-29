@@ -120,7 +120,15 @@ class ElbowPartialResultMetrics(_Result):
     def __init__(
         self,
         labelsValidationMetrics=None,
+        partitionsValidationMetrics=None,
+        partitionsComparisonMetrics=None,
     ):
         super().__init__(
-            labelsValidationMetrics=checkInstance(labelsValidationMetrics, MetricGroup, "labelsValidationMetrics")
+            labelsValidationMetrics=checkInstance(labelsValidationMetrics, MetricGroup, "labelsValidationMetrics"),
+            partitionsValidationMetrics=checkInstance(
+                partitionsValidationMetrics, MetricGroup, "partitionsValidationMetrics"
+            ),
+            partitionsComparisonMetrics=checkInstance(
+                partitionsComparisonMetrics, MetricGroup, "partitionsComparisonMetrics"
+            ),
         )

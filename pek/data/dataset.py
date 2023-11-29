@@ -1,6 +1,4 @@
 import json
-import pkgutil
-from io import BytesIO
 
 import numpy as np
 from sklearn.utils import Bunch
@@ -8,22 +6,20 @@ from sklearn.utils import Bunch
 from ..utils.encoding import NumpyEncoder
 
 
-def _loadPackageFile_npy(filePath) -> np.ndarray:
-    """Loads a npy file located inside the package."""
-    return np.load(BytesIO(pkgutil.get_data(__name__, filePath)))
+def _read(hdf5File, attr, dtype=float):
+    if attr not in hdf5File:
+        return None
+    else:
+        return np.array(hdf5File[attr], dtype=dtype)
 
 
 class Dataset:
-    """A class representing a built-in dataset."""
-
-    def __init__(self, name, n_clusters=None):
+    def __init__(self, name, hdf5File):
         self._name = name
-        self._header = None
-        self._n_clusters = n_clusters
+        self._hdf5File = hdf5File
 
+        self._features = None
         self._data = None
-        self._data_scaled = None
-
         self._pca = None
         self._tsne = None
         self._umap = None
@@ -31,13 +27,11 @@ class Dataset:
     def toDict(self, insertData=True, insertProjections=True):
         d = Bunch(
             name=self.name,
-            header=self.header,
-            n_clusters=self.n_clusters,
+            features=self.features,
         )
 
         if insertData:
             d["data"] = self.data
-            d["data_scaled"] = self.data_scaled
 
         if insertProjections:
             d["projections"] = Bunch(pca=self.pca, tsne=self.tsne, umap=self.umap)
@@ -54,43 +48,35 @@ class Dataset:
         return self._name
 
     @property
-    def header(self):
-        if self._header is None:
-            self._header = _loadPackageFile_npy(f"_npy/{self.name}.header.npy")
-        return self._header
-
-    @property
-    def n_clusters(self):
-        return self._n_clusters
+    def features(self):
+        if self._features is None:
+            self._features = _read(self._hdf5File, "features", dtype=str)
+        if self._features is None:
+            self._features = _read(self._hdf5File, "header", dtype=str)
+        return self._features
 
     @property
     def data(self):
         if self._data is None:
-            self._data = _loadPackageFile_npy(f"_npy/{self.name}.npy")
+            self._data = _read(self._hdf5File, "data")
         return self._data
-
-    @property
-    def data_scaled(self):
-        if self._data_scaled is None:
-            self._data_scaled = _loadPackageFile_npy(f"_npy/{self.name}.scaled.npy")
-        return self._data_scaled
 
     @property
     def pca(self):
         if self._pca is None:
-            self._pca = _loadPackageFile_npy(f"_npy/{self.name}.pca.npy")
+            self._pca = _read(self._hdf5File, "pca")
         return self._pca
 
     @property
     def tsne(self):
         if self._tsne is None:
-            self._tsne = _loadPackageFile_npy(f"_npy/{self.name}.tsne.npy")
+            self._tsne = _read(self._hdf5File, "tsne")
         return self._tsne
 
     @property
     def umap(self):
         if self._umap is None:
-            self._umap = _loadPackageFile_npy(f"_npy/{self.name}.umap.npy")
+            self._umap = _read(self._hdf5File, "umap")
         return self._umap
 
     def __str__(self):

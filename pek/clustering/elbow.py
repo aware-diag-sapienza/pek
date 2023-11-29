@@ -14,6 +14,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 
+from ..metrics.comparison import _toComparisonMetricDict
 from ..metrics.validation import _toValidationMetricDict
 from ..utils.process import (
     ProcessControlMessage,
@@ -54,10 +55,11 @@ class _AbstractElbow(ABC):
         max_iter=300,
         tol=1e-4,
         random_state=None,
+        freq=None,
         et=None,  # early terminator (a single element or None),
         labelsValidationMetrics=None,
-        cache=False,
-        freq=None,
+        partitionsValidationMetrics=None,
+        partitionsComparisonMetrics=None,
         taskId=None,
     ):
         self._X = X
@@ -68,11 +70,14 @@ class _AbstractElbow(ABC):
         self._tol = tol
         self._random_state = get_random_state(random_state)
         self._et = et
-        self._cache = cache
         self._freq = freq
         self._taskId = taskId
-        self._metricsCalculator = _ElbowMetricsCalculator(X, labelsValidationMetrics=labelsValidationMetrics)
-
+        self._metricsCalculator = _ElbowMetricsCalculator(
+            X,
+            labelsValidationMetrics=labelsValidationMetrics,
+            partitionsValidationMetrics=partitionsValidationMetrics,
+            partitionsComparisonMetrics=partitionsComparisonMetrics,
+        )
         self._etArray = [] if et is None else [et]
 
         if n_clusters_arr is None:
@@ -111,9 +116,10 @@ class ProgressiveEnsembleElbow(_AbstractElbow):
         tol=1e-4,
         random_state=None,
         et=None,
-        labelsValidationMetrics=None,
-        cache=False,
         freq=None,
+        labelsValidationMetrics=None,
+        partitionsValidationMetrics=None,
+        partitionsComparisonMetrics=None,
         taskId=None,
     ):
         super().__init__(
@@ -125,9 +131,10 @@ class ProgressiveEnsembleElbow(_AbstractElbow):
             tol=tol,
             random_state=random_state,
             et=et,
-            labelsValidationMetrics=labelsValidationMetrics,
-            cache=cache,
             freq=freq,
+            labelsValidationMetrics=labelsValidationMetrics,
+            partitionsValidationMetrics=partitionsValidationMetrics,
+            partitionsComparisonMetrics=partitionsComparisonMetrics,
             taskId=taskId,
         )
 
@@ -241,9 +248,13 @@ class ProgressiveEnsembleElbowProcess(Process):
         tol=1e-4,
         random_state=None,
         et=None,
-        labelsValidationMetrics=None,
-        cache=False,
         freq=None,
+        labelsValidationMetrics=None,
+        labelsComparisonMetrics=None,
+        labelsProgressionMetrics=None,
+        partitionsValidationMetrics=None,
+        partitionsComparisonMetrics=None,
+        partitionsProgressionMetrics=None,
         taskId=None,
         verbose=False,
         resultsQueue=None,
@@ -260,9 +271,10 @@ class ProgressiveEnsembleElbowProcess(Process):
             tol=tol,
             random_state=random_state,
             et=et,
-            labelsValidationMetrics=labelsValidationMetrics,
-            cache=cache,
             freq=freq,
+            labelsValidationMetrics=labelsValidationMetrics,
+            partitionsValidationMetrics=partitionsValidationMetrics,
+            partitionsComparisonMetrics=partitionsComparisonMetrics,
             taskId=taskId,
         )
 
@@ -331,12 +343,24 @@ class ProgressiveEnsembleElbowProcess(Process):
 
 
 class _ElbowMetricsCalculator:
-    def __init__(self, X, labelsValidationMetrics=None):
+    def __init__(
+        self,
+        X,
+        labelsValidationMetrics=None,
+        partitionsValidationMetrics=None,
+        partitionsComparisonMetrics=None,
+    ):
         self._X = X
         self._labelsValidationMetrics = _toValidationMetricDict(labelsValidationMetrics)
+        self._partitionsValidationMetrics = _toValidationMetricDict(partitionsValidationMetrics)
+        self._partitionsComparisonMetrics = _toComparisonMetricDict(partitionsComparisonMetrics)
 
     def getMetrics(self, ensembleResult):
-        return ElbowPartialResultMetrics(labelsValidationMetrics=self._compute_labelsValidationMetrics(ensembleResult))
+        return ElbowPartialResultMetrics(
+            labelsValidationMetrics=self._compute_labelsValidationMetrics(ensembleResult),
+            partitionsValidationMetrics=self._compute_partitionsValidationMetrics(ensembleResult),
+            partitionsComparisonMetrics=self._compute_partitionsComparisonMetrics(ensembleResult),
+        )
 
     def _compute_labelsValidationMetrics(self, ensembleResult):
         """Labels validation metrics are computed only on the current best labels."""
@@ -344,5 +368,39 @@ class _ElbowMetricsCalculator:
         for metricName, metricFunction in self._labelsValidationMetrics.items():
             if metricName not in res:
                 res[metricName] = metricFunction(self._X, ensembleResult.labels)
+
+        return MetricGroup(**res)
+
+    def _compute_partitionsValidationMetrics(self, ensembleResult):
+        """Partitions validation metrics are computed on each partition.
+        The result is a dictionary where each metric has an array of values, one for each partition.
+        """
+        res = {"inertia": ensembleResult.metrics.partitionsValidationMetrics.inertia}
+        for metricName, metricFunction in self._partitionsValidationMetrics.items():
+            if metricName not in res:
+                res[metricName] = np.empty(ensembleResult.partitions.shape[0], dtype=float)
+                for i in range(ensembleResult.partitions.shape[0]):
+                    res[metricName][i] = metricFunction(self._X, ensembleResult.partitions[i, :])
+
+        return MetricGroup(**res)
+
+    def _compute_partitionsComparisonMetrics(self, ensembleResult):
+        """
+        Partitions comparison metrics are computed on each pair of partition.
+        The result is a dictionary where each metric has a symmetric matrix RxR.
+        """
+        n_runs = ensembleResult.partitions.shape[0]
+        res = {}
+        for metricName, metricFunction in self._partitionsComparisonMetrics.items():
+            if metricName not in res:
+                res[metricName] = np.full((n_runs, n_runs), np.nan, dtype=float)
+
+                for i in range(n_runs):
+                    for j in range(n_runs):
+                        if j >= i:
+                            continue
+                        val = metricFunction(ensembleResult.partitions[i, :], ensembleResult.partitions[j, :])
+                        res[metricName][i, j] = val
+                        res[metricName][j, i] = val
 
         return MetricGroup(**res)

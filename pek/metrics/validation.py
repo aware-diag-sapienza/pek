@@ -87,7 +87,7 @@ ALL_VALIDATION_METRICS_DICT = {
     "davies_bouldin": daviesBouldinIndex,
     "dunn_index": dunnIndex,
     "inertia": inertia,
-    "silhouette": silhouette,
+    # "silhouette": silhouette,
     "simplified_silhouette": simplifiedSilhouette,
 }
 

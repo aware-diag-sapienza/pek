@@ -31,7 +31,7 @@ def main():
         n_clusters_arr=[2, 3, 4, 5, 6, 7, 8, 9, 10],
         n_runs=16,
         random_state=0,
-        validationMetrics="ALL",
+        labelsValidationMetrics="ALL",
         et="fast-kill",
     )
     while elbow.hasNextIteration():

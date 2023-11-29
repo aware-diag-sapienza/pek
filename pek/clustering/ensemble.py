@@ -366,10 +366,7 @@ class _EnsembleMetricsCalculator:
         res = {}
         for metricName, metricFunction in self._labelsProgressionMetrics.items():
             if metricName not in res:
-                if len(self._labelsHistory) == 1:
-                    res[metricName] = None
-                else:
-                    res[metricName] = metricFunction(self._labelsHistory)
+                res[metricName] = metricFunction(self._labelsHistory)
 
         return MetricGroup(**res)
 
@@ -417,9 +414,9 @@ class _EnsembleMetricsCalculator:
             if metricName not in res:
                 res[metricName] = [None for j in range(n_runs)]
                 for i in range(n_runs):
-                    if len(self._partitionsHistory) > 1:
-                        hist = [p[i, :] for p in self._partitionsHistory]
-                        res[metricName][i] = metricFunction(hist)
+                    # if len(self._partitionsHistory) > 1:
+                    hist = [p[i, :] for p in self._partitionsHistory]
+                    res[metricName][i] = metricFunction(hist)
 
         return MetricGroup(**res)
 
