@@ -15,6 +15,8 @@ When creating an ensemble task or elbow task, the client is added to a room name
 This speed up the sending of partial results because they are sent to the room that contain a single client.
 """
 
+TWO_GB = 2 * 1024 * 1024 * 1024  # two gigabytes
+
 
 class WebSocketServer(Thread):
     def __init__(self, server, port=21000):
@@ -28,8 +30,9 @@ class WebSocketServer(Thread):
 
     def run(self) -> None:
         app = Flask(self.server.name)
+        app.config["MAX_CONTENT_LENGTH"] = TWO_GB
         CORS(app, resources={r"/*": {"origins": "*"}})
-        socketio = SocketIO(app, cors_allowed_origins="*")
+        socketio = SocketIO(app, cors_allowed_origins="*", max_http_buffer_size=TWO_GB, ping_timeout=10)
 
         self.app = app
         self.socketio = socketio
@@ -111,12 +114,12 @@ class WebSocketServer(Thread):
 
         if taskId.startswith("ENS"):
             Log.print(
-                f"{Log.BLUE}Sending pr#{partialResult.info.iteration}{Log.ENDC} --- info={partialResult.info} et={partialResult.earlyTermination}",
+                f"{Log.BLUE}Sent pr#{partialResult.info.iteration}{Log.ENDC} --- info={partialResult.info} et={partialResult.earlyTermination}",
                 taskId=taskId,
             )
         elif taskId.startswith("ELB"):
             Log.print(
-                f"{Log.BLUE}Sending pr#{partialResult.info.iteration}{Log.ENDC} --- info={partialResult.info}",
+                f"{Log.BLUE}Sent pr#{partialResult.info.iteration}{Log.ENDC} --- info={partialResult.info}",
                 taskId=taskId,
             )
 
