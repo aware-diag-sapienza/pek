@@ -245,7 +245,9 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
 
         # minimize label changing
         if self._adjustLabels and self._prevResultCentroids is not None:
-            self._partitions[bestRunIndex, :] = adjustLabels(bestLabels, bestCentroids, self._prevResultCentroids)
+            for i in range(self._n_runs):
+                self._partitions[i, :] = adjustLabels(self._partitions[i, :], bestCentroids, self._prevResultCentroids)
+                # self._partitions[bestRunIndex, :] = adjustLabels(bestLabels, bestCentroids, self._prevResultCentroids)
             bestLabels = self._partitions[bestRunIndex, :]
 
         # create the partial result (info)

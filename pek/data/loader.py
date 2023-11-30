@@ -45,6 +45,7 @@ class DatasetLoader(ABC):
             "Ionosphere",
             "Iris",
             "LiverDisorder",
+            "MNIST",
             "S1",
             "S2",
             "S3",
