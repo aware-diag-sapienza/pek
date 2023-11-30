@@ -3,6 +3,7 @@ from abc import ABC
 from multiprocessing import Process, Queue
 
 import numpy as np
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils._param_validation import (
     Integral,
     Interval,
@@ -36,6 +37,38 @@ from .results import (
 from .run import ProgressiveKMeans
 
 
+def _adjustCentroids_fn(runs):
+    """Adjust initial centroids to minimize difference of labeling among runs.
+    The first centroid of run1 must be the closest centroid to the first centroid of run0.
+    Run0 is the one that guides the assignments. Complexity: r^2 * k"""
+    A = runs[0]._centers  # centroids of run[0]
+    B = [
+        runs[j]._centers for j in range(1, len(runs))
+    ]  # list of centroids for each remaining run. B[j] = centroids of run [j+1]
+
+    assigned = [[None for z in range(len(A))] for j in range(len(B))]
+
+    for i in range(len(A)):
+        for j in range(len(B)):
+            dist = euclidean_distances(
+                B[j], [A[i]]
+            ).flatten()  # distances for each centroids in B[j] to centroid A[i], array 1D
+            candidates = np.argsort(dist)
+            for z in candidates:
+                if assigned[j][z] is None:
+                    assigned[j][z] = i
+                    break
+
+    for j in range(len(B)):
+        newCenters = np.empty_like(B[j])
+        for z in range(len(newCenters)):
+            t = assigned[j][z]
+            newCenters[z] = B[j][t]
+
+        i = j + 1
+        runs[i]._centers = newCenters
+
+
 class _AbstractProgressiveEnsembleKMeans(ABC):
     @validate_params(
         {
@@ -54,6 +87,8 @@ class _AbstractProgressiveEnsembleKMeans(ABC):
             # "partitionsValidationMetrics": [None, str, "array-like"],
             # "partitionsComparisonMetrics": [None, str, "array-like"],
             # "partitionsProgressionMetrics": [None, str, "array-like"],
+            "adjustCentroids": [bool],
+            "adjustLabels": [bool],
         },
         prefer_skip_nested_validation=True,
     )
@@ -74,6 +109,8 @@ class _AbstractProgressiveEnsembleKMeans(ABC):
         partitionsValidationMetrics=None,
         partitionsComparisonMetrics=None,
         partitionsProgressionMetrics=None,
+        adjustCentroids=True,
+        adjustLabels=True,
         taskId=None,
     ):
         self._X = X
@@ -94,6 +131,8 @@ class _AbstractProgressiveEnsembleKMeans(ABC):
             partitionsComparisonMetrics=partitionsComparisonMetrics,
             partitionsProgressionMetrics=partitionsProgressionMetrics,
         )
+        self._adjustCentroids = adjustCentroids
+        self._adjustLabels = adjustLabels
         self._taskId = taskId
 
 
@@ -115,6 +154,8 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
         partitionsValidationMetrics=None,
         partitionsComparisonMetrics=None,
         partitionsProgressionMetrics=None,
+        adjustCentroids=True,
+        adjustLabels=True,
         taskId=None,
     ):
         super().__init__(
@@ -133,6 +174,8 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
             partitionsValidationMetrics=partitionsValidationMetrics,
             partitionsComparisonMetrics=partitionsComparisonMetrics,
             partitionsProgressionMetrics=partitionsProgressionMetrics,
+            adjustCentroids=adjustCentroids,
+            adjustLabels=adjustLabels,
             taskId=taskId,
         )
 
@@ -155,6 +198,12 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
                 init=self._init,
             )
             self._runs.append(r)
+
+        # adjust the order of centroids in the runs
+        # to have the same label assigned to a similar part of the space
+        # this limit the problem of consistency among different partitions
+        if self._adjustCentroids:
+            _adjustCentroids_fn(self._runs)
 
         self._partitions = np.zeros((self._n_runs, self._X.shape[0]), dtype=int)
         self._centroids = np.zeros((self._n_clusters, self._X.shape[1], self._n_runs), dtype=float)
@@ -195,7 +244,7 @@ class ProgressiveEnsembleKMeans(_AbstractProgressiveEnsembleKMeans):
         bestInertia = float(self._runsInertia[bestRunIndex])
 
         # minimize label changing
-        if self._prevResultCentroids is not None:
+        if self._adjustLabels and self._prevResultCentroids is not None:
             self._partitions[bestRunIndex, :] = adjustLabels(bestLabels, bestCentroids, self._prevResultCentroids)
             bestLabels = self._partitions[bestRunIndex, :]
 
@@ -439,6 +488,8 @@ class ProgressiveEnsembleKMeansProcess(Process):
         partitionsValidationMetrics=None,
         partitionsComparisonMetrics=None,
         partitionsProgressionMetrics=None,
+        adjustCentroids=True,
+        adjustLabels=True,
         taskId=None,
         verbose=False,
         resultsQueue=None,
@@ -462,6 +513,8 @@ class ProgressiveEnsembleKMeansProcess(Process):
             partitionsValidationMetrics=partitionsValidationMetrics,
             partitionsComparisonMetrics=partitionsComparisonMetrics,
             partitionsProgressionMetrics=partitionsProgressionMetrics,
+            adjustCentroids=adjustCentroids,
+            adjustLabels=adjustLabels,
             taskId=taskId,
         )
 

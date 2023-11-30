@@ -23,7 +23,7 @@ if __name__ == "__main__":
             "pek.termination",
             "pek.utils",
         ],
-        # python_requires='>=3.9.0',
+        python_requires=">=3.9.0",
         install_requires=open(Path("requirements.txt")).read().strip().split("\n"),
         package_data={"pek.data._hdf5": ["*.hdf5"]},
         include_package_data=True,

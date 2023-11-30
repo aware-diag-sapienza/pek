@@ -13,6 +13,8 @@ from ..version import __version__
 from .folders import Folders
 
 _dtype_str = h5py.special_dtype(vlen=str)
+_FLOAT = np.float32
+_COMPRESSION = 9
 
 
 class _Colors:
@@ -57,7 +59,7 @@ def _computeUMAP(dataScaled, dtype=float):
 
     if dataScaled.shape[1] > 2:
         # random_state = 0 --> no random state for parallelism
-        umap_proj = UMAP(random_state=0).fit_transform(dataScaled)
+        umap_proj = UMAP().fit_transform(dataScaled)
         umap_proj = np.asarray(MinMaxScaler().fit_transform(umap_proj), dtype=dtype, order="C")
         return umap_proj
     else:
@@ -92,7 +94,6 @@ class DatasetsImporter(ABC):
         inputFilePath = Path(inputFilePath)
         datasetName = inputFilePath.stem
         outputFilePath = _getDatasetFile(datasetName)
-        dtype = float  # important !!!
 
         if not inputFilePath.exists():
             raise RuntimeError(f"The file {inputFilePath.resolve()} does not exist.")
@@ -113,49 +114,49 @@ class DatasetsImporter(ABC):
         # create HDF5 file
 
         with h5py.File(outputFilePath, "w") as hf:
-            info = hf.create_dataset("__info__", data=np.zeros(1), compression="gzip", chunks=True)
+            info = hf.create_dataset("__info__", data=np.zeros(1), compression=_COMPRESSION)
             info.attrs["__version__"] = __version__
             if sampleSizePercent is not None:
                 info.attrs["sampleSize"] = sampleSizePercent
-                info.attrs["sampleRandomState"] = sampleRandomState
+                info.attrs["sampleRandomState"] = int(sampleRandomState)
 
             print(f"\tLoading input file ...")
             df = pd.read_csv(inputFilePath)
 
             # features
             features = np.asarray(list(df.columns), dtype=_dtype_str, order="C")
-            hf.create_dataset("features", data=features, compression="gzip", chunks=True)
+            hf.create_dataset("features", data=features, compression=_COMPRESSION)
 
             # data
-            data = np.asarray(df.to_numpy(dtype=dtype), order="C")
+            data = np.asarray(df.to_numpy(dtype=_FLOAT), order="C")
 
             if sampleSizePercent is not None:
                 totLen = data.shape[0]
                 sampledLen = int(np.ceil(totLen * float(sampleSizePercent) / 100))
                 print(f"\tSampling to {sampledLen} entries...")
-                data = np.random.default_rng(sampleRandomState).choice(data, sampledLen, replace=False)
+                data = np.random.default_rng(int(sampleRandomState)).choice(data, sampledLen, replace=False)
 
-            hf.create_dataset("data", data=data, compression="gzip", chunks=True)
+            hf.create_dataset("data", data=data, compression=_COMPRESSION)
 
             # projections
             dataScaled = None
             if computePca:
                 if dataScaled is None:
-                    dataScaled = _computeScaledData(data, dtype=dtype)
-                pca_proj = _computePCA(dataScaled, dtype=dtype)
-                hf.create_dataset("pca_proj", data=pca_proj, compression="gzip", chunks=True)
+                    dataScaled = _computeScaledData(data, dtype=_FLOAT)
+                pca_proj = _computePCA(dataScaled, dtype=_FLOAT)
+                hf.create_dataset("pca_proj", data=pca_proj, compression=_COMPRESSION)
 
             if computeTsne:
                 if dataScaled is None:
-                    dataScaled = _computeScaledData(data, dtype=dtype)
-                tsne_proj = _computeTSNE(dataScaled, dtype=dtype)
-                hf.create_dataset("tsne_proj", data=tsne_proj, compression="gzip", chunks=True)
+                    dataScaled = _computeScaledData(data, dtype=_FLOAT)
+                tsne_proj = _computeTSNE(dataScaled, dtype=_FLOAT)
+                hf.create_dataset("tsne_proj", data=tsne_proj, compression=_COMPRESSION)
 
             if computeUmap:
                 if dataScaled is None:
-                    dataScaled = _computeScaledData(data, dtype=dtype)
-                umap_proj = _computeUMAP(dataScaled, dtype=dtype)
-                hf.create_dataset("umap_proj", data=umap_proj, compression="gzip", chunks=True)
+                    dataScaled = _computeScaledData(data, dtype=_FLOAT)
+                umap_proj = _computeUMAP(dataScaled, dtype=_FLOAT)
+                hf.create_dataset("umap_proj", data=umap_proj, compression=_COMPRESSION)
 
             hf.flush()
             hf.close()

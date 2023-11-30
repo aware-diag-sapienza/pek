@@ -15,7 +15,8 @@ When creating an ensemble task or elbow task, the client is added to a room name
 This speed up the sending of partial results because they are sent to the room that contain a single client.
 """
 
-TWO_GB = 2 * 1024 * 1024 * 1024  # two gigabytes
+BUFFER_SIZE = 2 * 1024 * 1024 * 1024  # two gigabytes
+PING_TIMEOUT = 120
 
 
 class WebSocketServer(Thread):
@@ -30,9 +31,9 @@ class WebSocketServer(Thread):
 
     def run(self) -> None:
         app = Flask(self.server.name)
-        app.config["MAX_CONTENT_LENGTH"] = TWO_GB
+        app.config["MAX_CONTENT_LENGTH"] = BUFFER_SIZE
         CORS(app, resources={r"/*": {"origins": "*"}})
-        socketio = SocketIO(app, cors_allowed_origins="*", max_http_buffer_size=TWO_GB, ping_timeout=10)
+        socketio = SocketIO(app, cors_allowed_origins="*", max_http_buffer_size=BUFFER_SIZE, ping_timeout=PING_TIMEOUT)
 
         self.app = app
         self.socketio = socketio

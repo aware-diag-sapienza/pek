@@ -45,9 +45,8 @@ class DatasetLoader(ABC):
             "Segmentation",
             "Sonar",
             "SpectfHeart",
-            "SpotifySong_1P",
-            "SpotifySong_2P",
-            "SpotifySong_5P",
+            "SpotifySong",
+            # "SpotifySongFull",
             "Unbalanced",
             "Vehicles",
             "Wine",
@@ -92,6 +91,6 @@ class DatasetLoader(ABC):
             raise ValueError(f"Dataset '{name}' does not exist.")
 
     @staticmethod
-    def loadAll() -> list[Dataset]:
+    def loadAll() -> list:
         """Loads all the available datasets."""
         return [DatasetLoader.load(n) for n in DatasetLoader.allNames()]

@@ -6,7 +6,7 @@ from sklearn.utils import Bunch
 from ..utils.encoding import NumpyEncoder
 
 
-def _read(hdf5File, attr, dtype=float):
+def _read(hdf5File, attr, dtype=np.float64):
     if attr not in hdf5File:
         return None
     else:
