@@ -16,10 +16,17 @@ def _loadInPackageDataset(name):
 
 
 def _loadImportedDataset(name):
-    folder = Folders.importedDatasetsFolder()
-    filePath = folder.joinpath(f"{name}.hdf5")
-    file = h5py.File(filePath, "r")
-    return Dataset(name, file)
+    folder_local = Folders.importedDatasetsFolder(createIfNotExist=False)
+    filePath = folder_local.joinpath(f"{name}.hdf5")
+    if filePath.exists():
+        file = h5py.File(filePath, "r")
+        return Dataset(name, file)
+
+    folder_home = Folders.importedDatasetsFolderHome(createIfNotExist=False)
+    filePath = folder_home.joinpath(f"{name}.hdf5")
+    if filePath.exists():
+        file = h5py.File(filePath, "r")
+        return Dataset(name, file)
 
 
 class DatasetLoader(ABC):
@@ -56,12 +63,19 @@ class DatasetLoader(ABC):
     @staticmethod
     def _allNamesImported():
         """List of all imported datasets."""
-        folder = Folders.importedDatasetsFolder(createIfNotExist=False)
-        print(folder.resolve())
-        if folder.exists():
-            return sorted([file.stem for file in folder.glob(f"*.hdf5")])
-        else:
-            return []
+        result = set()
+
+        folder_local = Folders.importedDatasetsFolder(createIfNotExist=False)
+        if folder_local.exists():
+            for file in folder_local.glob(f"*.hdf5"):
+                result.add(file.stem)
+
+        folder_home = Folders.importedDatasetsFolderHome(createIfNotExist=False)
+        if folder_home.exists():
+            for file in folder_home.glob(f"*.hdf5"):
+                result.add(file.stem)
+
+        return sorted(list(result))
 
     @staticmethod
     def allNames() -> list:
@@ -73,8 +87,6 @@ class DatasetLoader(ABC):
             ls.add(d)
 
         completeList = sorted(ls)
-        # completeList = sorted(list(set([DatasetLoader._allNamesInPackage() + DatasetLoader._allNamesImported()])))
-        # completeList = sorted(list([DatasetLoader._allNamesInPackage() + DatasetLoader._allNamesImported()}))
         return completeList
 
     @staticmethod

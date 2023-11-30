@@ -3,7 +3,7 @@ from pek.data import DatasetLoader
 
 
 def main():
-    dataset = DatasetLoader.load("LiverDisorder")
+    dataset = DatasetLoader.load("SpotifySong_5P")
 
     # ENSEMBLE
 
@@ -18,7 +18,7 @@ def main():
         partitionsValidationMetrics="ALL",
         partitionsComparisonMetrics="ALL",
         partitionsProgressionMetrics="ALL",
-        ets=["slow-notify", "fast-notify"],
+        ets=["slow-kill", "fast-notify"],
         adjustCentroids=False,
         adjustLabels=False,
     )
